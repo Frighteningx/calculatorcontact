@@ -64,7 +64,7 @@
                     <input type="date" id="dateEnd" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
                 </div>
                 <div class="hidden filter-control">
-                    <label class="block text-xs text-gray-500 font-bold" title="Aplica a la Tabla y Gráficos generales (Erlang es siempre Entrante)">Sentido (Tabla/Gráfico)</label>
+                    <label class="block text-xs text-gray-500 font-bold" title="Aplica a la Tabla y Gráficos generales">Sentido (Tabla/Gráfico)</label>
                     <select id="filterSentido" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
                         <option value="ALL">Todos</option>
                         <option value="entrante" selected>Solo Entrantes</option>
@@ -118,8 +118,7 @@
                                     <th scope="col" class="px-4 py-3 text-center">Distribución (%)</th>
                                 </tr>
                             </thead>
-                            <tbody id="distributionTableBody">
-                                </tbody>
+                            <tbody id="distributionTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -151,7 +150,7 @@
                         <input type="number" id="erlangAwt" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="15">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600" title="Descuenta este % del volumen para calcular personal.">Tasa de Abandono (%)</label>
+                        <label class="block text-xs font-bold text-gray-600">Tasa de Abandono (%)</label>
                         <input type="number" id="erlangAbd" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="5">
                     </div>
                 </div>
@@ -172,14 +171,103 @@
                 </div>
             </div>
 
+            <div class="mt-10 border-t-2 border-espex-light pt-6">
+                <h2 class="text-2xl font-bold text-espex-dark mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Inteligencia Operativa y Calidad (Llamados Entrantes)
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-panel bg-espex-light border-l-4 border-espex flex flex-col justify-center items-center text-center">
+                        <p class="text-sm text-espex-dark font-bold mb-2">Nivel de Servicio (SLA) Histórico Real</p>
+                        <h3 id="kpiSlaReal" class="text-5xl font-extrabold text-espex-dark mb-2">0%</h3>
+                        <p class="text-xs text-gray-600">Llamadas atendidas en menos de <span class="font-bold">20 segundos</span>.</p>
+                        <p id="kpiSlaVol" class="text-xs text-gray-500 mt-1">0 / 0 llamadas</p>
+                    </div>
+
+                    <div class="glass-panel md:col-span-2">
+                        <h3 class="font-bold text-lg mb-2 text-espex-dark">Curva de Tolerancia al Abandono</h3>
+                        <p class="text-xs text-gray-500 mb-2">Muestra en qué tramo de espera los clientes pierden la paciencia y cuelgan.</p>
+                        <div class="relative h-48"><canvas id="chartAbandono"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="glass-panel">
+                        <h3 class="font-bold text-lg mb-2 text-espex-dark">Pareto: Top 10 Motivos de Llamado</h3>
+                        <div class="relative h-64"><canvas id="chartPareto"></canvas></div>
+                    </div>
+                    
+                    <div class="glass-panel">
+                        <h3 class="font-bold text-lg mb-2 text-espex-dark">Ranking AHT por Agente (Segundos)</h3>
+                        <p class="text-xs text-gray-500 mb-2">Tiempo Medio de Operación. Permite detectar perfiles rápidos vs lentos.</p>
+                        <div class="relative h-64"><canvas id="chartAhtAgentes"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 border-t-2 border-espex-light pt-6">
+                <h2 class="text-2xl font-bold text-espex-dark mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Módulo de Forecast Predictivo (Malla de Turnos)
+                </h2>
+                <div class="glass-panel border-l-4 border-indigo-500 bg-gradient-to-br from-white to-indigo-50">
+                    <p class="text-sm text-gray-700 mb-4">El motor analiza el historial y perfila el volumen promedio según el <strong>Día de la Semana</strong>. Úsalo para planificar la próxima semana o simular escenarios con ajustes de campaña.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-white p-4 rounded-lg shadow-sm border border-indigo-200 mb-6">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600">Día a Pronosticar</label>
+                            <select id="forecastDay" class="mt-1 w-full p-2 border rounded-md focus:ring-indigo-500 bg-indigo-50 font-bold text-indigo-800">
+                                <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+                                <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option>
+                                <option value="0">Domingo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600">Ajuste de Volumen (%)</label>
+                            <input type="number" id="forecastAdjust" class="mt-1 w-full p-2 border rounded-md" value="0" title="Ej: 15 para simular un aumento del 15% por campaña">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600">AHT Proyectado (Seg)</label>
+                            <input type="number" id="forecastAht" class="mt-1 w-full p-2 border rounded-md" value="390">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600">Shrinkage / Merma (%)</label>
+                            <input type="number" id="forecastShrinkage" class="mt-1 w-full p-2 border rounded-md" value="30" title="Factor de ausentismo para calcular Puestos Programados">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2 bg-white p-4 rounded-lg shadow-inner border border-gray-100 h-80 relative">
+                            <canvas id="chartForecast"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-inner border border-gray-100 overflow-y-auto h-80">
+                            <table class="w-full text-xs text-left text-gray-600">
+                                <thead class="text-white uppercase bg-indigo-600 sticky top-0">
+                                    <tr>
+                                        <th class="px-2 py-2">Hora</th>
+                                        <th class="px-2 py-2 text-center">Llamadas</th>
+                                        <th class="px-2 py-2 text-center" title="Personas a contratar/programar incluyendo shrinkage">Turnos Req.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="forecastTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // Variables Globales
+        // Variables Globales Existentes
         let charts = {};
         let rawData = []; 
-        let inboundDistribution30Map = {}; // Distribución ESTRICTA Entrante para Erlang
+        let inboundDistribution30Map = {}; 
+        
+        // Variables Globales Nuevas (Forecast)
+        let globalForecastModel = {}; // Guarda promedios por Día de la Semana (0-6)
 
         // Carga de archivo
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
@@ -231,44 +319,51 @@
             document.querySelectorAll('.filter-control').forEach(el => el.classList.remove('hidden'));
         }
 
+        // Helper tiempo
+        function timeToSeconds(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            if (parts.length !== 3) return 0;
+            return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+        }
+
         document.getElementById('btnFilter').addEventListener('click', applyFilters);
 
         function applyFilters() {
-            // Valores de los filtros
+            // Valores filtros
             const startDate = document.getElementById('dateStart').value;
             const endDate = document.getElementById('dateEnd').value;
-            const sentidoFilter = document.getElementById('filterSentido').value; // Para Tabla y Gráfico
+            const sentidoFilter = document.getElementById('filterSentido').value;
             const cola = document.getElementById('filterCola').value;
             const agente = document.getElementById('filterAgente').value;
 
-            // Actualizar el Badge visual
             const badge = document.getElementById('badgeChartSentido');
             if(sentidoFilter === 'entrante') { badge.innerText = "Solo Entrantes"; badge.className = "text-xs bg-espex-light text-espex-dark px-2 py-1 rounded-full font-bold"; }
             else if(sentidoFilter === 'saliente') { badge.innerText = "Solo Salientes"; badge.className = "text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold"; }
             else { badge.innerText = "Mixto (Entrantes + Salientes)"; badge.className = "text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-bold"; }
 
-            // Acumuladores
+            // Acumuladores Clásicos
             let kpiIn = 0, kpiOut = 0, kpiCases = 0;
-            let peakInCalls = 0;
-            let peakInTime = '--:--';
+            let peakInCalls = 0; let peakInTime = '--:--';
+            let dist30Count = {}; let totalCallsDist = 0;
+            let inbound30Count = {}; let totalInboundDist = 0;
+            let salientes60Total = {}; let casosPorDia = {};
 
-            // Para Tabla y Gráfico Dist (Depende de Sentido)
-            let dist30Count = {}; 
-            let totalCallsDist = 0;
+            // Acumuladores Nuevos (Inteligencia Operativa)
+            let tipificaciones = {};
+            let abandonoTiempos = { '0-10s':0, '11-20s':0, '21-30s':0, '31-40s':0, '41-50s':0, '51-60s':0, '+60s':0 };
+            let slaAtendidas = 0; let slaCumplido = 0;
+            let agenteTmo = {};
 
-            // Para Erlang (ESTRICTO ENTRANTE, IGNORA FILTRO DE SENTIDO)
-            let inbound30Count = {};
-            let totalInboundDist = 0;
+            // Acumuladores Nuevos (Forecast - Días de la semana)
+            let forecastDays = { 0:{}, 1:{}, 2:{}, 3:{}, 4:{}, 5:{}, 6:{} };
+            let uniqueDatesByDow = { 0:new Set(), 1:new Set(), 2:new Set(), 3:new Set(), 4:new Set(), 5:new Set(), 6:new Set() };
 
-            // Para Salientes y Casos
-            let salientes60Total = {};
-            let casosPorDia = {};
-
-            // Inicializar bloques 30min
             for(let h=0; h<24; h++) {
                 let hh = h.toString().padStart(2, '0');
                 dist30Count[`${hh}:00`] = 0; dist30Count[`${hh}:30`] = 0;
                 inbound30Count[`${hh}:00`] = 0; inbound30Count[`${hh}:30`] = 0;
+                for(let d=0; d<=6; d++) { forecastDays[d][`${hh}:00`] = 0; forecastDays[d][`${hh}:30`] = 0; }
             }
 
             // Procesar fila por fila
@@ -279,78 +374,110 @@
                 const rowCola = (row['Cola'] || '').trim();
                 const rowAgente = (row['Agente'] || '').trim();
                 const caso = (row['Caso'] || '').trim();
-
-                // Filtro Base (Fecha, Cola, Agente)
+                const estado = (row['Estado'] || '').trim().toLowerCase();
+                const tipificacion = (row['Tipificacion'] || 'Sin Tipificar').trim();
+                
                 let baseMatch = (rowDate >= startDate && rowDate <= endDate);
                 if (cola !== 'ALL') baseMatch = baseMatch && (rowCola === cola);
                 if (agente !== 'ALL') baseMatch = baseMatch && (rowAgente === agente);
 
                 if (!baseMatch) return;
 
-                // Parseo de Hora
                 const timeStr = row['Fecha'].split(' ')[1] || '00:00:00';
                 const hourPart = timeStr.split(':')[0]; 
                 const minPart = parseInt(timeStr.split(':')[1]);
                 const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
                 const block60 = `${rowDate} ${hourPart}:00`;
 
-                // KPIs Generales (De la data filtrada base)
+                // KPIs Clásicos
                 if (rowSentido === 'entrante') kpiIn++;
                 if (rowSentido === 'saliente') kpiOut++;
                 if (caso !== '') { kpiCases++; casosPorDia[rowDate] = (casosPorDia[rowDate] || 0) + 1; }
 
-                // Lógica de Distribución (Tabla y Gráfico)
                 if (sentidoFilter === 'ALL' || sentidoFilter === rowSentido) {
-                    dist30Count[block30]++;
-                    totalCallsDist++;
+                    dist30Count[block30]++; totalCallsDist++;
                 }
 
-                // Lógica Erlang (ESTRICTO ENTRANTE)
                 if (rowSentido === 'entrante') {
-                    inbound30Count[block30]++;
-                    totalInboundDist++;
+                    inbound30Count[block30]++; totalInboundDist++;
+
+                    // --- NUEVO: Data para Forecast ---
+                    // Fecha formato YYYY-MM-DDT00:00:00 para evitar desface de zona horaria local
+                    const rowDateObj = new Date(rowDate + 'T00:00:00'); 
+                    const dow = rowDateObj.getDay(); // 0=Sun, 1=Mon
+                    uniqueDatesByDow[dow].add(rowDate);
+                    forecastDays[dow][block30]++;
+
+                    // --- NUEVO: Inteligencia Operativa ---
+                    tipificaciones[tipificacion] = (tipificaciones[tipificacion] || 0) + 1;
+
+                    const tEspera = timeToSeconds(row['Tiempo de Espera']);
+                    const tLlamada = timeToSeconds(row['Tiempo de Llamada']);
+
+                    if (estado.includes('no-atendida') || estado.includes('abandona')) {
+                        if (tEspera <= 10) abandonoTiempos['0-10s']++;
+                        else if (tEspera <= 20) abandonoTiempos['11-20s']++;
+                        else if (tEspera <= 30) abandonoTiempos['21-30s']++;
+                        else if (tEspera <= 40) abandonoTiempos['31-40s']++;
+                        else if (tEspera <= 50) abandonoTiempos['41-50s']++;
+                        else if (tEspera <= 60) abandonoTiempos['51-60s']++;
+                        else abandonoTiempos['+60s']++;
+                    } else {
+                        // Atendidas
+                        slaAtendidas++;
+                        if (tEspera <= 20) slaCumplido++;
+
+                        if (rowAgente && rowAgente.toUpperCase() !== 'AGENTE IVR' && tLlamada > 0) {
+                            if (!agenteTmo[rowAgente]) agenteTmo[rowAgente] = { sum:0, count:0 };
+                            agenteTmo[rowAgente].sum += tLlamada;
+                            agenteTmo[rowAgente].count++;
+                        }
+                    }
                 }
 
-                // Lógica Salientes Gráfico
-                if (rowSentido === 'saliente') {
-                    salientes60Total[block60] = (salientes60Total[block60] || 0) + 1;
-                }
+                if (rowSentido === 'saliente') salientes60Total[block60] = (salientes60Total[block60] || 0) + 1;
             });
 
-            // Buscar Peak de Entrantes para el KPI
+            // Peak In
             for (const [block, calls] of Object.entries(inbound30Count)) {
-                if (calls > peakInCalls) {
-                    peakInCalls = calls;
-                    peakInTime = block;
+                if (calls > peakInCalls) { peakInCalls = calls; peakInTime = block; }
+            }
+
+            // --- PROCESAR MODELO DE FORECAST ---
+            globalForecastModel = {};
+            for(let d=0; d<=6; d++) {
+                let daysCount = uniqueDatesByDow[d].size || 1; // Evitar división por cero
+                globalForecastModel[d] = {};
+                for(let h=0; h<24; h++) {
+                    let hh = h.toString().padStart(2, '0');
+                    globalForecastModel[d][`${hh}:00`] = forecastDays[d][`${hh}:00`] / daysCount;
+                    globalForecastModel[d][`${hh}:30`] = forecastDays[d][`${hh}:30`] / daysCount;
                 }
             }
 
-            // Actualizar DOM KPIs
+            // Actualizar DOM Clásico
             document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
             document.getElementById('kpiSalientes').innerText = kpiOut.toLocaleString();
             document.getElementById('kpiPeak').innerText = peakInCalls.toLocaleString();
             document.getElementById('kpiPeakTime').innerText = peakInTime;
             document.getElementById('kpiCasos').innerText = kpiCases.toLocaleString();
 
-            // Construir Tabla de Distribución y Chart de Distribución
+            // Actualizar DOM Nuevo (SLA)
+            const slaPct = slaAtendidas > 0 ? ((slaCumplido / slaAtendidas) * 100).toFixed(1) : 0;
+            document.getElementById('kpiSlaReal').innerText = `${slaPct}%`;
+            document.getElementById('kpiSlaVol').innerText = `${slaCumplido} / ${slaAtendidas} atendidas`;
+
+            // Construir Tabla Dist
             const tbody = document.getElementById('distributionTableBody');
             tbody.innerHTML = '';
-            
-            const distLabels = [];
-            const distData = [];
-
-            // Limpiar Mapa Erlang
+            const distLabels = []; const distData = [];
             inboundDistribution30Map = {}; 
 
             Object.keys(dist30Count).sort().forEach(block => {
                 let [h, m] = block.split(':');
-                
-                // --- Generar datos para Erlang (Solo Entrantes) ---
                 const inQty = inbound30Count[block];
-                const inPct = totalInboundDist > 0 ? (inQty / totalInboundDist) : 0;
-                inboundDistribution30Map[block] = inPct; 
+                inboundDistribution30Map[block] = totalInboundDist > 0 ? (inQty / totalInboundDist) : 0; 
 
-                // --- Generar UI Tabla/Gráfico (Según Filtro) ---
                 const distQty = dist30Count[block];
                 const distPct = totalCallsDist > 0 ? (distQty / totalCallsDist) * 100 : 0;
                 
@@ -359,94 +486,120 @@
                 if (endH === '24') endH = '00';
                 const rangoStr = `${h}:${m} a ${endH}:${endM}`;
 
-                // Filtrar visualización (no mostrar toda la madrugada si está en 0)
                 if(distQty > 0 || (parseInt(h) >= 7 && parseInt(h) <= 20)) {
-                    distLabels.push(block);
-                    distData.push(distQty);
-
+                    distLabels.push(block); distData.push(distQty);
                     tbody.innerHTML += `
                         <tr class="bg-white border-b table-row-hover transition duration-150">
                             <td class="px-4 py-2 font-medium text-gray-900">${rangoStr}</td>
                             <td class="px-4 py-2 text-center text-gray-700">${distQty}</td>
                             <td class="px-4 py-2 text-center text-espex-dark font-bold">${distPct.toFixed(2)}%</td>
-                        </tr>
-                    `;
+                        </tr>`;
                 }
             });
 
             document.getElementById('kpiContainer').classList.remove('hidden');
             document.getElementById('dashboardContainer').classList.remove('hidden');
 
-            // Dibujar Gráficos
+            // Renderizar Todo
             renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
             renderChartCases('chartCases', casosPorDia);
             renderChartOut('chartOut60', salientes60Total);
             
-            // Refrescar Erlang con la data pura de Entrantes
+            // Renderizar Nuevos
+            renderPareto(tipificaciones);
+            renderAbandono(abandonoTiempos);
+            renderAhtAgentes(agenteTmo);
+
+            // Refrescar Motores Erlang & Forecast
             updateErlangCurve();
+            updateForecastUI();
         }
 
-        // Gráfico de Distribución (Barras)
+        // --- Gráficos Clásicos ---
         function renderDistChart(canvasId, labels, data, sentido) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
-
-            // Color semántico
-            let bgColor = sentido === 'saliente' ? '#3b82f6' : '#22c55e'; // Azul o Verde
+            let bgColor = sentido === 'saliente' ? '#3b82f6' : '#22c55e';
             let labelText = sentido === 'saliente' ? 'Volumen Saliente' : (sentido === 'entrante' ? 'Volumen Entrante' : 'Volumen Total');
-
             charts[canvasId] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: labelText,
-                        data: data,
-                        backgroundColor: bgColor,
-                        borderRadius: 4
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
-                }
+                type: 'bar', data: { labels: labels, datasets: [{ label: labelText, data: data, backgroundColor: bgColor, borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
-
         function renderChartCases(canvasId, dataObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
-            const labels = Object.keys(dataObj).sort();
-            const data = labels.map(l => dataObj[l]);
+            const labels = Object.keys(dataObj).sort(); const data = labels.map(l => dataObj[l]);
             charts[canvasId] = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Casos', data: data, backgroundColor: '#a855f7', borderRadius: 4 }] },
+                type: 'bar', data: { labels: labels, datasets: [{ label: 'Casos', data: data, backgroundColor: '#a855f7', borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
             });
         }
-
         function renderChartOut(canvasId, totalObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
             const labels = Object.keys(totalObj).sort();
-            
             charts[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: { 
-                    labels: labels.map(l => l.substring(5, 16)), 
-                    datasets: [{
-                        label: 'Total Salientes x Hora',
-                        data: labels.map(l => totalObj[l] || 0),
-                        borderColor: '#1d4ed8', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, fill: true, backgroundColor: '#1d4ed820'
-                    }] 
-                },
+                type: 'line', data: { labels: labels.map(l => l.substring(5, 16)), datasets: [{ label: 'Salientes', data: labels.map(l => totalObj[l] || 0), borderColor: '#1d4ed8', backgroundColor: '#1d4ed820', borderWidth: 2, fill: true, tension: 0.3 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        // --- ERLANG C (Estricto Entrantes) ---
+        // --- Gráficos Nuevos (Inteligencia) ---
+        function renderPareto(tipiObj) {
+            const ctx = document.getElementById('chartPareto').getContext('2d');
+            if(charts['chartPareto']) charts['chartPareto'].destroy();
+            
+            // Ordenar y sacar Top 10
+            const sortedTips = Object.keys(tipiObj).sort((a,b) => tipiObj[b] - tipiObj[a]).slice(0, 10);
+            const data = sortedTips.map(t => tipiObj[t]);
+
+            charts['chartPareto'] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: sortedTips, datasets: [{ label: 'Volumen', data: data, backgroundColor: '#f59e0b', borderRadius: 4 }] },
+                options: { 
+                    indexAxis: 'y', // Pareto horizontal es más legible para textos largos
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } 
+                }
+            });
+        }
+
+        function renderAbandono(abdObj) {
+            const ctx = document.getElementById('chartAbandono').getContext('2d');
+            if(charts['chartAbandono']) charts['chartAbandono'].destroy();
+            const labels = Object.keys(abdObj); const data = labels.map(l => abdObj[l]);
+            charts['chartAbandono'] = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: [{ label: 'Abandonos', data: data, borderColor: '#ef4444', backgroundColor: '#ef444440', borderWidth: 3, fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
+            });
+        }
+
+        function renderAhtAgentes(ahtObj) {
+            const ctx = document.getElementById('chartAhtAgentes').getContext('2d');
+            if(charts['chartAhtAgentes']) charts['chartAhtAgentes'].destroy();
+            
+            // Filtrar agentes con muy pocas llamadas (ruido) y calcular promedio
+            let validAgents = [];
+            for (const [agente, stats] of Object.entries(ahtObj)) {
+                if(stats.count > 5) {
+                    validAgents.push({ name: agente, aht: Math.round(stats.sum / stats.count) });
+                }
+            }
+            // Ordenar de mayor a menor AHT
+            validAgents.sort((a,b) => b.aht - a.aht);
+            
+            charts['chartAhtAgentes'] = new Chart(ctx, {
+                type: 'bar',
+                data: { 
+                    labels: validAgents.map(a => a.name), 
+                    datasets: [{ label: 'AHT (Seg)', data: validAgents.map(a => a.aht), backgroundColor: '#0ea5e9', borderRadius: 4 }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
+            });
+        }
+
+        // --- ERLANG C BASE ---
         function getErlangCPW(agents, traffic) {
             let erlangB = traffic / (1 + traffic);
             for (let i = 2; i <= agents; i++) { erlangB = (traffic * erlangB) / (i + traffic * erlangB); }
@@ -458,10 +611,8 @@
             if (callsInInterval <= 0 || ahtSeconds <= 0) return 0;
             let hourlyCalls = callsInInterval * (60 / intervalMins);
             let traffic = (hourlyCalls * ahtSeconds) / 3600;
-            
             let agents = Math.floor(traffic) + 1; 
-            let sl = 0;
-            let maxIterations = 500; 
+            let sl = 0; let maxIterations = 500; 
             
             while (sl < (targetSL / 100) && agents < maxIterations) {
                 let pw = getErlangCPW(agents, traffic);
@@ -471,6 +622,7 @@
             return agents;
         }
 
+        // Erlang Clásico
         function updateErlangCurve() {
             const volDiario = parseFloat(document.getElementById('erlangVol').value) || 0;
             const aht = parseFloat(document.getElementById('erlangAht').value) || 390;
@@ -479,13 +631,10 @@
             const abd = parseFloat(document.getElementById('erlangAbd').value) || 5;
 
             const factorEfectivo = 1 - (abd / 100);
-
-            const labelsList = [];
-            const dataAgentes = [];
-            const dataVolumen = [];
+            const labelsList = []; const dataAgentes = []; const dataVolumen = [];
 
             Object.keys(inboundDistribution30Map).sort().forEach(block => {
-                let inPct = inboundDistribution30Map[block]; // Esto usa SIEMPRE la data pura entrante
+                let inPct = inboundDistribution30Map[block];
                 let h = parseInt(block.split(':')[0]);
                 
                 if(inPct > 0 || (h >= 7 && h <= 20)) {
@@ -511,20 +660,80 @@
                     ]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { tooltip: { mode: 'index', intersect: false } },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Nº Agentes' } },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Llamadas Entrantes (30m)' } }
-                    }
+                    responsive: true, maintainAspectRatio: false, plugins: { tooltip: { mode: 'index', intersect: false } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Nº Agentes' } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Llamadas Entrantes (30m)' } } }
+                }
+            });
+        }
+
+        // --- NUEVO: Motor de Forecast ---
+        function updateForecastUI() {
+            // Leer parámetros de Forecast
+            const targetDow = document.getElementById('forecastDay').value; // 0-6
+            const adjustPct = parseFloat(document.getElementById('forecastAdjust').value) || 0;
+            const aht = parseFloat(document.getElementById('forecastAht').value) || 390;
+            const shrinkage = parseFloat(document.getElementById('forecastShrinkage').value) || 30;
+            
+            // Asumir SLA de la app principal por ahora
+            const slObj = parseFloat(document.getElementById('erlangSl').value) || 95;
+            const awt = parseFloat(document.getElementById('erlangAwt').value) || 15;
+
+            const factorCrecimiento = 1 + (adjustPct / 100);
+            
+            let modelDow = globalForecastModel[targetDow] || {};
+            
+            const tbody = document.getElementById('forecastTableBody');
+            tbody.innerHTML = '';
+            
+            const labelsList = []; const dataAgentes = []; const dataVolumen = [];
+
+            Object.keys(modelDow).sort().forEach(block => {
+                let baseAvgCalls = modelDow[block] || 0;
+                let projectedCalls = baseAvgCalls * factorCrecimiento;
+                let h = parseInt(block.split(':')[0]);
+
+                if(projectedCalls > 0.5 || (h >= 8 && h <= 20)) {
+                    labelsList.push(block);
+                    dataVolumen.push(Math.round(projectedCalls));
+
+                    let pureAgents = calculateErlangC(projectedCalls, 30, aht, slObj, awt);
+                    let programmedStaff = pureAgents > 0 ? Math.ceil(pureAgents / (1 - (shrinkage / 100))) : 0;
+                    dataAgentes.push(programmedStaff);
+
+                    tbody.innerHTML += `
+                        <tr class="border-b table-row-hover">
+                            <td class="px-2 py-1 font-bold text-gray-800">${block}</td>
+                            <td class="px-2 py-1 text-center text-indigo-600">${Math.round(projectedCalls)}</td>
+                            <td class="px-2 py-1 text-center text-espex-dark font-extrabold bg-espex-light rounded">${programmedStaff}</td>
+                        </tr>`;
+                }
+            });
+
+            const canvasId = 'chartForecast';
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if(charts[canvasId]) charts[canvasId].destroy();
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelsList,
+                    datasets: [
+                        { label: 'Turnos Req. (Con Shrinkage)', data: dataAgentes, backgroundColor: '#4f46e5', borderRadius: 4, order: 2 },
+                        { label: 'Volumen Pronosticado', data: dataVolumen, type: 'line', borderColor: '#ec4899', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, yAxisID: 'y1', order: 1 }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, plugins: { tooltip: { mode: 'index', intersect: false }, legend: {position: 'bottom'} },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Turnos a Cubrir' } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Volumen 30m' } } }
                 }
             });
         }
 
         // Listeners WFM
-        ['erlangVol', 'erlangAht', 'erlangSl', 'erlangAwt', 'erlangAbd'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updateErlangCurve);
-        });
+        ['erlangVol', 'erlangAht', 'erlangSl', 'erlangAwt', 'erlangAbd'].forEach(id => { document.getElementById(id).addEventListener('input', updateErlangCurve); });
+        
+        // Listeners Forecast
+        ['forecastDay', 'forecastAdjust', 'forecastAht', 'forecastShrinkage'].forEach(id => { document.getElementById(id).addEventListener('input', updateForecastUI); });
 
     </script>
 </body>
