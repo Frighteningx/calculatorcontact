@@ -16,6 +16,7 @@
                             light: '#dcfce7',
                             DEFAULT: '#22c55e',
                             dark: '#166534',
+                            table: '#f0fdf4'
                         }
                     }
                 }
@@ -23,111 +24,132 @@
         }
     </script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; }
-        .glass-panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; }
+        .glass-panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; border: 1px solid #e2e8f0; }
         ::-webkit-scrollbar { width: 8px; height: 8px;}
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 4px;}
         ::-webkit-scrollbar-thumb:hover { background: #166534; }
+        .table-row-hover:hover { background-color: #dcfce7; }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <nav class="bg-espex-dark text-white p-4 shadow-lg flex justify-between items-center">
+    <nav class="bg-espex-dark text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center space-x-3">
             <svg class="w-10 h-10 text-espex-light" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
-            <h1 class="text-2xl font-bold tracking-wide">ESPEX <span class="text-espex-light font-light">Analytics CTI</span></h1>
+            <h1 class="text-2xl font-bold tracking-wide">ESPEX <span class="text-espex-light font-light">WFM Suite</span></h1>
         </div>
-        <div class="text-sm font-medium">Dashboard Gerencial WFM</div>
+        <div class="text-sm font-medium">Planificación Inteligente</div>
     </nav>
 
     <div class="max-w-7xl mx-auto p-6 space-y-6">
         
         <div class="glass-panel border-t-4 border-espex">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="w-full md:w-1/2">
-                    <h2 class="text-xl font-bold mb-2 text-espex-dark">1. Carga de Datos</h2>
-                    <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-espex-light file:text-espex-dark hover:file:bg-green-200 transition" />
+            <h2 class="text-xl font-bold mb-4 text-espex-dark border-b pb-2">Panel de Control y Filtros</h2>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Cargar CSV Histórico</label>
+                    <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-espex-light file:text-espex-dark hover:file:bg-green-200 transition cursor-pointer" />
                 </div>
                 
-                <div id="filterSection" class="w-full md:w-1/2 border-l pl-4 hidden opacity-0 transition-opacity duration-500">
-                    <h2 class="text-xl font-bold mb-2 text-espex-dark">2. Filtros de Fecha</h2>
-                    <div class="flex items-end space-x-4">
-                        <div>
-                            <label class="block text-xs text-gray-500 font-bold">Desde</label>
-                            <input type="date" id="dateStart" class="mt-1 p-2 border rounded-md text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 font-bold">Hasta</label>
-                            <input type="date" id="dateEnd" class="mt-1 p-2 border rounded-md text-sm">
-                        </div>
-                        <button id="btnFilter" class="bg-espex text-white px-4 py-2 rounded-md hover:bg-espex-dark font-bold text-sm transition">Aplicar Filtro</button>
-                    </div>
+                <div class="hidden filter-control">
+                    <label class="block text-xs text-gray-500 font-bold">Desde</label>
+                    <input type="date" id="dateStart" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
+                </div>
+                <div class="hidden filter-control">
+                    <label class="block text-xs text-gray-500 font-bold">Hasta</label>
+                    <input type="date" id="dateEnd" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
+                </div>
+                <div class="hidden filter-control">
+                    <label class="block text-xs text-gray-500 font-bold">Sentido</label>
+                    <select id="filterSentido" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
+                        <option value="ALL">Todos</option>
+                        <option value="entrante" selected>Entrante</option>
+                        <option value="saliente">Saliente</option>
+                    </select>
+                </div>
+                <div class="hidden filter-control">
+                    <label class="block text-xs text-gray-500 font-bold">Cola</label>
+                    <select id="filterCola" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex"><option value="ALL">Todas</option></select>
+                </div>
+                <div class="hidden filter-control md:col-span-2">
+                    <label class="block text-xs text-gray-500 font-bold">Agente</label>
+                    <select id="filterAgente" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex"><option value="ALL">Todos</option></select>
+                </div>
+                <div class="hidden filter-control md:col-span-4 text-right">
+                    <button id="btnFilter" class="bg-espex text-white px-6 py-2 rounded-md hover:bg-espex-dark font-bold text-sm transition shadow-md">Aplicar Filtros</button>
                 </div>
             </div>
-        </div>
-
-        <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
-            <div class="glass-panel border-l-4 border-espex"><p class="text-sm text-gray-500">Llamadas Entrantes (Periodo)</p><h3 id="kpiEntrantes" class="text-3xl font-bold text-espex-dark">0</h3></div>
-            <div class="glass-panel border-l-4 border-blue-500"><p class="text-sm text-gray-500">Llamadas Salientes (Periodo)</p><h3 id="kpiSalientes" class="text-3xl font-bold text-blue-700">0</h3></div>
-            <div class="glass-panel border-l-4 border-yellow-500"><p class="text-sm text-gray-500">Volumen Peak (1Hr)</p><h3 id="kpiPeak" class="text-2xl font-bold text-yellow-700">0</h3><p id="kpiPeakTime" class="text-xs text-gray-400">--:--</p></div>
-            <div class="glass-panel border-l-4 border-purple-500"><p class="text-sm text-gray-500">Casos Creados</p><h3 id="kpiCasos" class="text-3xl font-bold text-purple-700">0</h3></div>
         </div>
 
         <div id="dashboardContainer" class="hidden space-y-6">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-panel">
-                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Volumen Entrante Histórico (Bloques 30 Min)</h3>
-                    <canvas id="chartIn30"></canvas>
+            <div class="glass-panel">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-espex-dark">Distribución Horaria (Bloques 30 Min)</h3>
+                    <span class="text-xs bg-espex-light text-espex-dark px-2 py-1 rounded-full font-bold">Base Histórica Filtrada</span>
                 </div>
-                <div class="glass-panel">
-                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Volumen Entrante Histórico (Bloques 1 Hora)</h3>
-                    <canvas id="chartIn60"></canvas>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-panel">
-                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Flujo Salientes por Hora (Top 5 Agentes + General)</h3>
-                    <canvas id="chartOut60"></canvas>
-                </div>
-                <div class="glass-panel">
-                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Estadística de Casos Ingresados por Día</h3>
-                    <canvas id="chartCases"></canvas>
+                <div class="overflow-y-auto max-h-80 border rounded-lg shadow-inner">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-white uppercase bg-espex sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Horario</th>
+                                <th scope="col" class="px-6 py-3 text-center">Distribución (%)</th>
+                                <th scope="col" class="px-6 py-3 text-center">Vol. Histórico Base</th>
+                            </tr>
+                        </thead>
+                        <tbody id="distributionTableBody">
+                            </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="glass-panel bg-gradient-to-br from-white to-espex-light">
+            <div class="glass-panel border-l-4 border-espex bg-gradient-to-br from-white to-espex-table">
                 <div class="flex items-center space-x-2 mb-2">
-                    <svg class="w-6 h-6 text-espex-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <h3 class="font-bold text-xl text-espex-dark">Modelo Erlang: Curva de Requerimiento de Personal</h3>
+                    <svg class="w-6 h-6 text-espex-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <h3 class="font-bold text-xl text-espex-dark">Simulador de Requerimiento de Personal (Erlang C - 30 Min)</h3>
                 </div>
-                <p class="text-sm text-gray-700 mb-4">Esta curva muestra cuántas personas <strong>(Part-Time o Full-Time)</strong> necesitas programar hora a hora para cubrir la demanda promedio del periodo seleccionado. Ajusta los parámetros operativos y la gráfica se actualizará sola.</p>
+                <p class="text-sm text-gray-700 mb-4">Ajusta los parámetros operativos. La curva tomará los <strong>Llamados Diarios Proyectados</strong> y los repartirá según la distribución porcentual de la tabla superior para calcular cuántos agentes necesitas en cada bloque.</p>
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end bg-white p-4 rounded-lg shadow-sm border border-green-200 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-end bg-white p-4 rounded-lg shadow-sm border border-green-200 mb-6">
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">AHT / TMO (Segundos)</label>
-                        <input type="number" id="erlangAht" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="180">
+                        <label class="block text-xs font-bold text-gray-600">Llamadas Recibidas Diarias</label>
+                        <input type="number" id="erlangVol" class="mt-1 w-full p-2 border rounded-md focus:ring-espex bg-blue-50 font-bold" value="3000">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">Nivel Servicio Obj (%)</label>
-                        <input type="number" id="erlangSl" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="80">
+                        <label class="block text-xs font-bold text-gray-600">Duración llamadas (Seg)</label>
+                        <input type="number" id="erlangAht" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="390">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">T. Respuesta Obj (Seg)</label>
-                        <input type="number" id="erlangAwt" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="20">
+                        <label class="block text-xs font-bold text-gray-600">NDA / SL (%)</label>
+                        <input type="number" id="erlangSl" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="95">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">Shrinkage (%)</label>
-                        <input type="number" id="erlangShrinkage" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="30" title="Merma por ausentismo, pausas, etc.">
+                        <label class="block text-xs font-bold text-gray-600">Respuesta antes de (Seg)</label>
+                        <input type="number" id="erlangAwt" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="15">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600" title="Descuenta este % del volumen para calcular personal.">Tasa de Abandono (%)</label>
+                        <input type="number" id="erlangAbd" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="5">
                     </div>
                 </div>
 
                 <div class="bg-white p-4 rounded-lg shadow-inner border border-gray-100">
-                    <canvas id="chartErlangCurve" height="80"></canvas>
+                    <canvas id="chartErlangCurve" height="100"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel">
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Flujo Salientes (Agentes)</h3>
+                    <canvas id="chartOut60"></canvas>
+                </div>
+                <div class="glass-panel">
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Casos Ingresados por Día</h3>
+                    <canvas id="chartCases"></canvas>
                 </div>
             </div>
 
@@ -137,10 +159,10 @@
     <script>
         // Variables Globales
         let charts = {};
-        let rawData = []; // Guarda todos los datos originales
-        let globalAvgCallsPerHour = {}; // Guarda promedios horarios para la curva Erlang
+        let rawData = []; 
+        let distribution30Map = {}; // Guarda el % de distribución por bloque de 30 min
 
-        // Evento de carga de archivo
+        // Evento Carga
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -150,55 +172,77 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     rawData = results.data;
-                    setupDateFilters();
-                    applyFilters(); // Procesa la data inicial
+                    setupFilters();
+                    applyFilters(); 
                 }
             });
         });
 
-        // Configurar fechas mínimas y máximas en los filtros
-        function setupDateFilters() {
+        // Configurar Filtros Dinámicos
+        function setupFilters() {
             let dates = [];
+            let colas = new Set();
+            let agentes = new Set();
+
             rawData.forEach(row => {
                 if (row['Fecha']) {
                     const d = row['Fecha'].split(' ')[0];
                     if (d && d.length === 10) dates.push(d);
                 }
+                if (row['Cola']) colas.add(row['Cola'].trim());
+                if (row['Agente']) agentes.add(row['Agente'].trim());
             });
             
+            // Fechas
             if (dates.length > 0) {
                 dates.sort();
-                const minDate = dates[0];
-                const maxDate = dates[dates.length - 1];
-                
-                document.getElementById('dateStart').value = minDate;
-                document.getElementById('dateEnd').value = maxDate;
-                
-                const filterSec = document.getElementById('filterSection');
-                filterSec.classList.remove('hidden');
-                setTimeout(() => filterSec.classList.remove('opacity-0'), 100);
+                document.getElementById('dateStart').value = dates[0];
+                document.getElementById('dateEnd').value = dates[dates.length - 1];
             }
+
+            // Población selects
+            const popSelect = (id, set) => {
+                const el = document.getElementById(id);
+                el.innerHTML = '<option value="ALL">Todos/as</option>';
+                Array.from(set).sort().forEach(val => {
+                    if(val) el.innerHTML += `<option value="${val}">${val}</option>`;
+                });
+            };
+            popSelect('filterCola', colas);
+            popSelect('filterAgente', agentes);
+
+            // Mostrar controles
+            document.querySelectorAll('.filter-control').forEach(el => el.classList.remove('hidden'));
         }
 
-        // Evento botón Filtrar
         document.getElementById('btnFilter').addEventListener('click', applyFilters);
 
         function applyFilters() {
             const startDate = document.getElementById('dateStart').value;
             const endDate = document.getElementById('dateEnd').value;
-
-            if (!startDate || !endDate) return;
+            const sentido = document.getElementById('filterSentido').value;
+            const cola = document.getElementById('filterCola').value;
+            const agente = document.getElementById('filterAgente').value;
 
             const filteredData = rawData.filter(row => {
                 if (!row['Fecha']) return false;
                 const rowDate = row['Fecha'].split(' ')[0];
-                return rowDate >= startDate && rowDate <= endDate;
+                const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
+                const rowCola = (row['Cola'] || '').trim();
+                const rowAgente = (row['Agente'] || '').trim();
+
+                let keep = (rowDate >= startDate && rowDate <= endDate);
+                if (sentido !== 'ALL') keep = keep && (rowSentido === sentido);
+                if (cola !== 'ALL') keep = keep && (rowCola === cola);
+                if (agente !== 'ALL') keep = keep && (rowAgente === agente);
+                
+                return keep;
             });
 
             processData(filteredData);
         }
 
-        // Helper: Convertir HH:MM:SS a segundos
+        // Helper tiempo
         function timeToSeconds(timeStr) {
             if (!timeStr) return 0;
             const parts = timeStr.split(':');
@@ -207,136 +251,92 @@
         }
 
         function processData(data) {
-            let entrantes30 = {};
-            let entrantes60 = {};
+            let bloques30Count = {};
             let salientes60Total = {};
             let salientes60Agentes = {};
             let casosPorDia = {};
             
-            // Para la Curva Erlang (Promedios)
-            let callsPerHourDistrib = {};
-            const uniqueDaysSet = new Set();
-            
-            let totalEntrantes = 0;
-            let totalSalientes = 0;
-            let totalCasos = 0;
-            let sumAht = 0;
-            let countAht = 0;
+            let totalCallsTable = 0;
+
+            // Inicializar array de bloques 30min
+            for(let h=0; h<24; h++) {
+                let hh = h.toString().padStart(2, '0');
+                bloques30Count[`${hh}:00`] = 0;
+                bloques30Count[`${hh}:30`] = 0;
+            }
 
             data.forEach(row => {
                 const sentido = (row['Sentido'] || '').trim().toLowerCase();
                 const fechaRaw = row['Fecha'] || '';
                 const caso = (row['Caso'] || '').trim();
-                const agente = (row['Agente'] || 'Desconocido').trim();
-                const tiempoLlamada = timeToSeconds(row['Tiempo de Llamada'] || '00:00:00');
+                const agenteRow = (row['Agente'] || 'Desconocido').trim();
                 
                 if (!fechaRaw) return;
 
                 const dateParts = fechaRaw.split(' ');
                 const dateStr = dateParts[0]; 
                 const timeStr = dateParts[1] || '00:00:00';
-                uniqueDaysSet.add(dateStr);
                 
-                const hourPart = timeStr.split(':')[0]; // "00" a "23"
+                const hourPart = timeStr.split(':')[0]; 
                 const minPart = parseInt(timeStr.split(':')[1]);
                 
+                const minBlock = minPart < 30 ? '00' : '30';
+                const blockKey = `${hourPart}:${minBlock}`;
                 const block60 = `${dateStr} ${hourPart}:00`;
-                const block30 = minPart < 30 ? `${dateStr} ${hourPart}:00` : `${dateStr} ${hourPart}:30`;
+
+                // Todo lo filtrado cuenta para la distribución de la tabla
+                bloques30Count[blockKey]++;
+                totalCallsTable++;
 
                 // Casos
-                if (caso !== '') {
-                    casosPorDia[dateStr] = (casosPorDia[dateStr] || 0) + 1;
-                    totalCasos++;
-                }
+                if (caso !== '') casosPorDia[dateStr] = (casosPorDia[dateStr] || 0) + 1;
 
-                if (sentido === 'entrante') {
-                    totalEntrantes++;
-                    entrantes30[block30] = (entrantes30[block30] || 0) + 1;
-                    entrantes60[block60] = (entrantes60[block60] || 0) + 1;
-                    
-                    // Acumular por hora del día (sin importar fecha) para la curva promedio
-                    callsPerHourDistrib[hourPart] = (callsPerHourDistrib[hourPart] || 0) + 1;
-                    
-                    if (tiempoLlamada > 0) {
-                        sumAht += tiempoLlamada;
-                        countAht++;
-                    }
-                } else if (sentido === 'saliente') {
-                    totalSalientes++;
+                // Salientes para su gráfico específico
+                if (sentido === 'saliente') {
                     salientes60Total[block60] = (salientes60Total[block60] || 0) + 1;
-                    if (!salientes60Agentes[agente]) salientes60Agentes[agente] = {};
-                    salientes60Agentes[agente][block60] = (salientes60Agentes[agente][block60] || 0) + 1;
+                    if (!salientes60Agentes[agenteRow]) salientes60Agentes[agenteRow] = {};
+                    salientes60Agentes[agenteRow][block60] = (salientes60Agentes[agenteRow][block60] || 0) + 1;
                 }
             });
 
-            const uniqueDays = uniqueDaysSet.size || 1;
+            // Construir Tabla de Distribución
+            const tbody = document.getElementById('distributionTableBody');
+            tbody.innerHTML = '';
+            distribution30Map = {}; // Reset
 
-            // Calcular Promedios para la curva
-            for(let i=0; i<24; i++) {
-                let hh = i.toString().padStart(2, '0');
-                globalAvgCallsPerHour[hh] = (callsPerHourDistrib[hh] || 0) / uniqueDays;
-            }
-            
-            // Buscar Peak Real Histórico
-            let peakHour = '';
-            let peakCalls = 0;
-            for (const [hour, calls] of Object.entries(entrantes60)) {
-                if (calls > peakCalls) {
-                    peakCalls = calls;
-                    peakHour = hour;
+            Object.keys(bloques30Count).sort().forEach(block => {
+                const qty = bloques30Count[block];
+                const pct = totalCallsTable > 0 ? (qty / totalCallsTable) * 100 : 0;
+                distribution30Map[block] = pct / 100; // Guardar decimal para Erlang
+
+                // Formatear rango (ej: 08:00 a 08:30)
+                let [h, m] = block.split(':');
+                let endM = m === '00' ? '30' : '00';
+                let endH = m === '00' ? h : (parseInt(h)+1).toString().padStart(2, '0');
+                if (endH === '24') endH = '00';
+                const rangoStr = `${h}:${m} a ${endH}:${endM}`;
+
+                // Solo mostrar si tiene datos o es horario laboral (para no tener filas eternas en 0)
+                if(qty > 0 || (parseInt(h) >= 7 && parseInt(h) <= 20)) {
+                    tbody.innerHTML += `
+                        <tr class="bg-white border-b table-row-hover transition duration-150">
+                            <td class="px-6 py-2 font-medium text-gray-900">${rangoStr}</td>
+                            <td class="px-6 py-2 text-center text-espex-dark font-bold">${pct.toFixed(2)}%</td>
+                            <td class="px-6 py-2 text-center text-gray-500">${qty}</td>
+                        </tr>
+                    `;
                 }
-            }
+            });
 
-            // AHT Global Promedio
-            const avgAht = countAht > 0 ? Math.round(sumAht / countAht) : 180;
-            document.getElementById('erlangAht').value = avgAht; // Auto-setear AHT real
-
-            // Actualizar KPIs
-            document.getElementById('kpiEntrantes').innerText = totalEntrantes.toLocaleString();
-            document.getElementById('kpiSalientes').innerText = totalSalientes.toLocaleString();
-            document.getElementById('kpiPeak').innerText = peakCalls.toLocaleString();
-            document.getElementById('kpiPeakTime').innerText = peakHour;
-            document.getElementById('kpiCasos').innerText = totalCasos.toLocaleString();
-            
-            document.getElementById('kpiContainer').classList.remove('hidden');
             document.getElementById('dashboardContainer').classList.remove('hidden');
 
-            // Renderizar Gráficos Históricos
-            renderChart('chartIn30', 'bar', entrantes30, 'Llamadas Entrantes', '#4ade80');
-            renderChart('chartIn60', 'line', entrantes60, 'Llamadas Entrantes', '#22c55e');
             renderChartCases('chartCases', casosPorDia);
             renderChartOut('chartOut60', salientes60Total, salientes60Agentes);
             
-            // Dibujar Curva Erlang
             updateErlangCurve();
         }
 
-        // Renderizadores genéricos
-        function renderChart(canvasId, type, dataObj, label, color) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            if(charts[canvasId]) charts[canvasId].destroy();
-
-            const labels = Object.keys(dataObj).sort();
-            const data = labels.map(l => dataObj[l]);
-
-            charts[canvasId] = new Chart(ctx, {
-                type: type,
-                data: {
-                    labels: labels.map(l => l.substring(5, 16)), // Cortar año
-                    datasets: [{
-                        label: label,
-                        data: data,
-                        backgroundColor: color + '80',
-                        borderColor: color,
-                        borderWidth: 2,
-                        fill: type === 'line',
-                        tension: 0.3
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
-        }
-
+        // Gráficos complementarios
         function renderChartCases(canvasId, dataObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
@@ -345,7 +345,7 @@
             charts[canvasId] = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: labels, datasets: [{ label: 'Casos', data: data, backgroundColor: '#a855f7', borderRadius: 4 }] },
-                options: { responsive: true }
+                options: { responsive: true, plugins: { legend: {display: false} } }
             });
         }
 
@@ -361,11 +361,9 @@
             }).slice(0, 5);
 
             const datasets = [{
-                label: 'General',
+                label: 'Total Salientes',
                 data: labels.map(l => totalObj[l] || 0),
-                borderColor: '#1d4ed8',
-                backgroundColor: 'transparent',
-                borderWidth: 3, borderDash: [5, 5], tension: 0.3
+                borderColor: '#1d4ed8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], tension: 0.3
             }];
 
             const colors = ['#f59e0b', '#10b981', '#ef4444', '#6366f1', '#ec4899'];
@@ -373,19 +371,18 @@
                 datasets.push({
                     label: agente,
                     data: labels.map(l => agentesObj[agente][l] || 0),
-                    borderColor: colors[idx % colors.length],
-                    backgroundColor: 'transparent', borderWidth: 2, tension: 0.3
+                    borderColor: colors[idx % colors.length], backgroundColor: 'transparent', borderWidth: 1.5, tension: 0.3
                 });
             });
 
             charts[canvasId] = new Chart(ctx, {
                 type: 'line',
                 data: { labels: labels.map(l => l.substring(5, 16)), datasets: datasets },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
             });
         }
 
-        // --- LÓGICA CORE: ERLANG C ---
+        // --- ERLANG C (Ajustado para intervalos de 30 min) ---
         function getErlangCPW(agents, traffic) {
             let erlangB = traffic / (1 + traffic);
             for (let i = 2; i <= agents; i++) {
@@ -395,9 +392,13 @@
             return Math.max(0, Math.min(1, erlangC));
         }
 
-        function calculateErlangC(callsPerHour, ahtSeconds, targetSL, targetTime) {
-            if (callsPerHour <= 0 || ahtSeconds <= 0) return 0;
-            let traffic = (callsPerHour * ahtSeconds) / 3600;
+        function calculateErlangC(callsInInterval, intervalMins, ahtSeconds, targetSL, targetTime) {
+            if (callsInInterval <= 0 || ahtSeconds <= 0) return 0;
+            // Para Erlang, Tráfico = Tasa Horaria de Llamadas * (AHT en Horas)
+            // Tasa Horaria = Llamadas del Intervalo * (60 / Minutos del Intervalo)
+            let hourlyCalls = callsInInterval * (60 / intervalMins);
+            let traffic = (hourlyCalls * ahtSeconds) / 3600;
+            
             let agents = Math.floor(traffic) + 1; 
             let sl = 0;
             let maxIterations = 500; 
@@ -413,26 +414,35 @@
         }
 
         function updateErlangCurve() {
-            const aht = parseFloat(document.getElementById('erlangAht').value) || 180;
-            const slObj = parseFloat(document.getElementById('erlangSl').value) || 80;
-            const awt = parseFloat(document.getElementById('erlangAwt').value) || 20;
-            const shrinkage = parseFloat(document.getElementById('erlangShrinkage').value) || 30;
+            const volDiario = parseFloat(document.getElementById('erlangVol').value) || 0;
+            const aht = parseFloat(document.getElementById('erlangAht').value) || 390;
+            const slObj = parseFloat(document.getElementById('erlangSl').value) || 95;
+            const awt = parseFloat(document.getElementById('erlangAwt').value) || 15;
+            const abd = parseFloat(document.getElementById('erlangAbd').value) || 5;
 
-            const labels24 = [];
-            const dataProgramados = [];
-            const dataLlamadas = [];
+            // Factor de corrección de volumen (Restamos el abandono para dimensionar solo atendidas)
+            const factorEfectivo = 1 - (abd / 100);
 
-            for(let i=0; i<24; i++) {
-                let hh = i.toString().padStart(2, '0');
-                labels24.push(`${hh}:00`);
+            const labelsList = [];
+            const dataAgentes = [];
+            const dataVolumen = [];
+
+            Object.keys(distribution30Map).sort().forEach(block => {
+                let pct = distribution30Map[block];
                 
-                const avgCalls = globalAvgCallsPerHour[hh] || 0;
-                dataLlamadas.push(Math.round(avgCalls));
-                
-                const baseAgents = calculateErlangC(avgCalls, aht, slObj, awt);
-                const scheduledAgents = Math.ceil(baseAgents / (1 - (shrinkage / 100)));
-                dataProgramados.push(baseAgents > 0 ? scheduledAgents : 0);
-            }
+                // Cortar visualización para no mostrar toda la madrugada vacía, filtramos horario hábil referencial
+                let h = parseInt(block.split(':')[0]);
+                if(pct > 0 || (h >= 7 && h <= 20)) {
+                    labelsList.push(block);
+                    
+                    // Volumen proyectado para estos 30 minutos
+                    let calls30m = (volDiario * pct) * factorEfectivo;
+                    dataVolumen.push(Math.round(calls30m));
+                    
+                    let baseAgents = calculateErlangC(calls30m, 30, aht, slObj, awt);
+                    dataAgentes.push(baseAgents);
+                }
+            });
 
             const canvasId = 'chartErlangCurve';
             const ctx = document.getElementById(canvasId).getContext('2d');
@@ -441,58 +451,42 @@
             charts[canvasId] = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels24,
+                    labels: labelsList,
                     datasets: [
                         {
-                            label: 'Agentes Necesarios (Staffing Curve)',
-                            data: dataProgramados,
-                            backgroundColor: '#22c55e', // Verde Espex
+                            label: 'Agentes Requeridos (Cada 30 min)',
+                            data: dataAgentes,
+                            backgroundColor: '#22c55e', 
                             borderRadius: 4,
                             order: 2
                         },
                         {
-                            label: 'Volumen Promedio Esperado',
-                            data: dataLlamadas,
+                            label: 'Vol. Proyectado (- Abandono)',
+                            data: dataVolumen,
                             type: 'line',
-                            borderColor: '#1e40af', // Azul oscuro
+                            borderColor: '#1e40af', 
                             backgroundColor: 'transparent',
                             borderWidth: 2,
-                            borderDash: [5, 5],
-                            tension: 0.4,
+                            tension: 0.3,
                             yAxisID: 'y1',
                             order: 1
                         }
                     ]
                 },
                 options: { 
-                    responsive: true, 
-                    plugins: { 
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.raw;
-                                }
-                            }
-                        }
-                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { tooltip: { mode: 'index', intersect: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Nº Agentes Programados' }
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            position: 'right',
-                            grid: { drawOnChartArea: false },
-                            title: { display: true, text: 'Nº Llamadas Promedio' }
-                        }
+                        y: { beginAtZero: true, title: { display: true, text: 'Nº Agentes' } },
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Llamadas (30m)' } }
                     }
                 }
             });
         }
 
-        // Listeners Erlang Updates
-        ['erlangAht', 'erlangSl', 'erlangAwt', 'erlangShrinkage'].forEach(id => {
+        // Listeners WFM
+        ['erlangVol', 'erlangAht', 'erlangSl', 'erlangAwt', 'erlangAbd'].forEach(id => {
             document.getElementById(id).addEventListener('input', updateErlangCurve);
         });
 
