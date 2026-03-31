@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espex - Dashboard Analítico de Contact Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        espex: {
+                            light: '#dcfce7',
+                            DEFAULT: '#22c55e',
+                            dark: '#166534',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4; }
+        .glass-panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px;}
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #166534; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <nav class="bg-espex-dark text-white p-4 shadow-lg flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <svg class="w-10 h-10 text-espex-light" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <h1 class="text-2xl font-bold tracking-wide">ESPEX <span class="text-espex-light font-light">Analytics CTI</span></h1>
+        </div>
+        <div class="text-sm font-medium">Dashboard Gerencial WFM</div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-6 space-y-6">
+        
+        <div class="glass-panel text-center border-t-4 border-espex">
+            <h2 class="text-xl font-bold mb-4 text-espex-dark">Carga de Registro de Llamados</h2>
+            <p class="text-sm text-gray-500 mb-4">Sube el archivo CSV extraído del sistema para poblar automáticamente todas las métricas y gráficos.</p>
+            <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-espex-light file:text-espex-dark hover:file:bg-green-200 transition" />
+        </div>
+
+        <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
+            <div class="glass-panel border-l-4 border-espex"><p class="text-sm text-gray-500">Llamadas Entrantes Totales</p><h3 id="kpiEntrantes" class="text-3xl font-bold text-espex-dark">0</h3></div>
+            <div class="glass-panel border-l-4 border-blue-500"><p class="text-sm text-gray-500">Llamadas Salientes Totales</p><h3 id="kpiSalientes" class="text-3xl font-bold text-blue-700">0</h3></div>
+            <div class="glass-panel border-l-4 border-yellow-500"><p class="text-sm text-gray-500">Peak Hora Entrantes</p><h3 id="kpiPeak" class="text-2xl font-bold text-yellow-700">0</h3><p id="kpiPeakTime" class="text-xs text-gray-400">--:--</p></div>
+            <div class="glass-panel border-l-4 border-purple-500"><p class="text-sm text-gray-500">Casos Creados Totales</p><h3 id="kpiCasos" class="text-3xl font-bold text-purple-700">0</h3></div>
+        </div>
+
+        <div id="dashboardContainer" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel">
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Volumen Entrante (Bloques 30 Min)</h3>
+                    <canvas id="chartIn30"></canvas>
+                </div>
+                <div class="glass-panel">
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Volumen Entrante (Bloques 1 Hora)</h3>
+                    <canvas id="chartIn60"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel">
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Flujo Salientes por Hora (Top 5 Agentes + General)</h3>
+                    <canvas id="chartOut60"></canvas>
+                </div>
+                <div class="glass-panel">
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Estadística de Casos Ingresados por Día</h3>
+                    <canvas id="chartCases"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-panel bg-gradient-to-br from-white to-espex-light">
+                <div class="flex items-center space-x-2 mb-4">
+                    <svg class="w-6 h-6 text-espex-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <h3 class="font-bold text-xl text-espex-dark">Calculadora de Dimensionamiento (Erlang C)</h3>
+                </div>
+                <p class="text-sm text-gray-700 mb-6">Esta herramienta se autocompleta con los datos del <strong>Peak de Llamadas</strong> detectado. Modifica los parámetros para simular escenarios. Ideal para justificar la contratación de los 30 Part-Time.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">Llamadas / Hora (Peak)</label>
+                        <input type="number" id="erlangCalls" class="mt-1 w-full p-2 border rounded-md focus:ring-espex focus:border-espex" value="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">AHT (Segundos)</label>
+                        <input type="number" id="erlangAht" class="mt-1 w-full p-2 border rounded-md" value="0" title="Average Handling Time (Tiempo de Llamada + Espera)">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">Nivel Servicio Obj (%)</label>
+                        <input type="number" id="erlangSl" class="mt-1 w-full p-2 border rounded-md" value="80">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">T. Respuesta Obj (Seg)</label>
+                        <input type="number" id="erlangAwt" class="mt-1 w-full p-2 border rounded-md" value="20">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">Shrinkage (%)</label>
+                        <input type="number" id="erlangShrinkage" class="mt-1 w-full p-2 border rounded-md" value="30" title="Merma por ausentismo, pausas, etc.">
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-white rounded-lg border-2 border-espex-dark flex justify-between items-center shadow-inner">
+                    <div>
+                        <h4 class="text-lg font-bold text-gray-800">Agentes Concurrentes Requeridos (Erlang Puro): <span id="resErlang" class="text-espex-dark text-2xl">0</span></h4>
+                        <p class="text-sm text-gray-500">Agentes logueados simultáneamente necesarios para cumplir la meta.</p>
+                    </div>
+                    <div class="text-right border-l pl-4">
+                        <h4 class="text-lg font-bold text-gray-800">Personas a Programar (Con Shrinkage): <span id="resProgramados" class="text-blue-600 text-2xl">0</span></h4>
+                        <p class="text-xs text-gray-500">Considerando mermas operativas.</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-gray-500 text-right">
+                    *Para validar tus 30 Part-Time, evalúa cuántos coinciden en la franja del peak vs las "Personas a Programar".
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Variables globales para gráficos
+        let charts = {};
+
+        document.getElementById('csvFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processData(results.data);
+                }
+            });
+        });
+
+        // Helper: Convertir HH:MM:SS a segundos
+        function timeToSeconds(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            if (parts.length !== 3) return 0;
+            return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+        }
+
+        function processData(data) {
+            let entrantes30 = {};
+            let entrantes60 = {};
+            let salientes60Total = {};
+            let salientes60Agentes = {};
+            let casosPorDia = {};
+            
+            let totalEntrantes = 0;
+            let totalSalientes = 0;
+            let totalCasos = 0;
+            let sumAhtPeak = 0;
+            let countAhtPeak = 0;
+
+            data.forEach(row => {
+                const sentido = (row['Sentido'] || '').trim().toLowerCase();
+                const fechaRaw = row['Fecha'] || '';
+                const estado = (row['Estado'] || '').trim().toLowerCase();
+                const caso = (row['Caso'] || '').trim();
+                const agente = (row['Agente'] || 'Desconocido').trim();
+                const tiempoLlamada = timeToSeconds(row['Tiempo de Llamada'] || '00:00:00');
+                const tiempoEspera = timeToSeconds(row['Tiempo de Espera'] || '00:00:00');
+                
+                if (!fechaRaw) return;
+
+                // Parsear fecha YYYY-MM-DD HH:MM:SS
+                const dateParts = fechaRaw.split(' ');
+                const dateStr = dateParts[0]; // YYYY-MM-DD
+                const timeStr = dateParts[1] || '00:00:00';
+                
+                const hourPart = timeStr.split(':')[0];
+                const minPart = parseInt(timeStr.split(':')[1]);
+                
+                const block60 = `${dateStr} ${hourPart}:00`;
+                const block30 = minPart < 30 ? `${dateStr} ${hourPart}:00` : `${dateStr} ${hourPart}:30`;
+
+                // Casos
+                if (caso !== '') {
+                    casosPorDia[dateStr] = (casosPorDia[dateStr] || 0) + 1;
+                    totalCasos++;
+                }
+
+                if (sentido === 'entrante') {
+                    totalEntrantes++;
+                    entrantes30[block30] = (entrantes30[block30] || 0) + 1;
+                    entrantes60[block60] = (entrantes60[block60] || 0) + 1;
+                } else if (sentido === 'saliente') {
+                    totalSalientes++;
+                    salientes60Total[block60] = (salientes60Total[block60] || 0) + 1;
+                    
+                    if (!salientes60Agentes[agente]) salientes60Agentes[agente] = {};
+                    salientes60Agentes[agente][block60] = (salientes60Agentes[agente][block60] || 0) + 1;
+                }
+            });
+
+            // Ordenar claves
+            const sortKeys = (obj) => Object.keys(obj).sort();
+            
+            // Buscar Peak Hour Entrantes para Erlang
+            let peakHour = '';
+            let peakCalls = 0;
+            for (const [hour, calls] of Object.entries(entrantes60)) {
+                if (calls > peakCalls) {
+                    peakCalls = calls;
+                    peakHour = hour;
+                }
+            }
+
+            // Calcular AHT promedio del Peak
+            data.forEach(row => {
+                const fechaRaw = row['Fecha'] || '';
+                if (fechaRaw.startsWith(peakHour.substring(0, 13))) { // Match YYYY-MM-DD HH
+                    const tLlamada = timeToSeconds(row['Tiempo de Llamada']);
+                    if (tLlamada > 0) {
+                        sumAhtPeak += tLlamada;
+                        countAhtPeak++;
+                    }
+                }
+            });
+            const avgAhtPeak = countAhtPeak > 0 ? Math.round(sumAhtPeak / countAhtPeak) : 180;
+
+            // Actualizar KPIs
+            document.getElementById('kpiEntrantes').innerText = totalEntrantes.toLocaleString();
+            document.getElementById('kpiSalientes').innerText = totalSalientes.toLocaleString();
+            document.getElementById('kpiPeak').innerText = peakCalls.toLocaleString();
+            document.getElementById('kpiPeakTime').innerText = peakHour;
+            document.getElementById('kpiCasos').innerText = totalCasos.toLocaleString();
+            
+            document.getElementById('kpiContainer').classList.remove('hidden');
+            document.getElementById('dashboardContainer').classList.remove('hidden');
+
+            // Set Erlang Defaults
+            document.getElementById('erlangCalls').value = peakCalls;
+            document.getElementById('erlangAht').value = avgAhtPeak;
+            updateErlang();
+
+            // Renderizar Gráficos
+            renderChart('chartIn30', 'bar', entrantes30, 'Llamadas Entrantes (30min)', '#4ade80');
+            renderChart('chartIn60', 'line', entrantes60, 'Llamadas Entrantes (1Hr)', '#22c55e');
+            renderChartCases('chartCases', casosPorDia);
+            renderChartOut('chartOut60', salientes60Total, salientes60Agentes);
+            
+            // Listeners Erlang
+            ['erlangCalls', 'erlangAht', 'erlangSl', 'erlangAwt', 'erlangShrinkage'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateErlang);
+            });
+        }
+
+        function renderChart(canvasId, type, dataObj, label, color) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if(charts[canvasId]) charts[canvasId].destroy();
+
+            const labels = Object.keys(dataObj).sort();
+            const data = labels.map(l => dataObj[l]);
+
+            charts[canvasId] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels.map(l => l.substring(5, 16)), // Cortar año
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: color + '80', // transparency
+                        borderColor: color,
+                        borderWidth: 2,
+                        fill: type === 'line',
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderChartCases(canvasId, dataObj) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if(charts[canvasId]) charts[canvasId].destroy();
+
+            const labels = Object.keys(dataObj).sort();
+            const data = labels.map(l => dataObj[l]);
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Casos Ingresados',
+                        data: data,
+                        backgroundColor: '#a855f7',
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function renderChartOut(canvasId, totalObj, agentesObj) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if(charts[canvasId]) charts[canvasId].destroy();
+
+            const labels = Object.keys(totalObj).sort();
+            
+            // Top 5 agentes
+            const topAgentes = Object.keys(agentesObj).sort((a, b) => {
+                const sumA = Object.values(agentesObj[a]).reduce((acc, val) => acc + val, 0);
+                const sumB = Object.values(agentesObj[b]).reduce((acc, val) => acc + val, 0);
+                return sumB - sumA;
+            }).slice(0, 5);
+
+            const datasets = [{
+                label: 'General (Total)',
+                data: labels.map(l => totalObj[l] || 0),
+                borderColor: '#1d4ed8',
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                borderDash: [5, 5],
+                tension: 0.3
+            }];
+
+            const colors = ['#f59e0b', '#10b981', '#ef4444', '#6366f1', '#ec4899'];
+            
+            topAgentes.forEach((agente, idx) => {
+                datasets.push({
+                    label: agente,
+                    data: labels.map(l => agentesObj[agente][l] || 0),
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3
+                });
+            });
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels.map(l => l.substring(5, 16)), datasets: datasets },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+            });
+        }
+
+        // --- LÓGICA CORE: ERLANG C ITERATIVO SEGURO ---
+        function getErlangCPW(agents, traffic) {
+            let erlangB = traffic / (1 + traffic);
+            for (let i = 2; i <= agents; i++) {
+                erlangB = (traffic * erlangB) / (i + traffic * erlangB);
+            }
+            let erlangC = erlangB / (1 - (traffic / agents) * (1 - erlangB));
+            return Math.max(0, Math.min(1, erlangC));
+        }
+
+        function calculateErlangC(callsPerHour, ahtSeconds, targetSL, targetTime) {
+            if (callsPerHour <= 0 || ahtSeconds <= 0) return 0;
+            let traffic = (callsPerHour * ahtSeconds) / 3600;
+            let agents = Math.floor(traffic) + 1; // Asientos mínimos
+            let sl = 0;
+            let maxIterations = 500; // Seguridad evitar bucles infinitos
+            
+            while (sl < (targetSL / 100) && agents < maxIterations) {
+                let pw = getErlangCPW(agents, traffic);
+                sl = 1 - (pw * Math.exp(-(agents - traffic) * (targetTime / ahtSeconds)));
+                if (sl < (targetSL / 100)) {
+                    agents++;
+                }
+            }
+            return agents;
+        }
+
+        function updateErlang() {
+            const calls = parseFloat(document.getElementById('erlangCalls').value) || 0;
+            const aht = parseFloat(document.getElementById('erlangAht').value) || 0;
+            const slObj = parseFloat(document.getElementById('erlangSl').value) || 0;
+            const awt = parseFloat(document.getElementById('erlangAwt').value) || 0;
+            const shrinkage = parseFloat(document.getElementById('erlangShrinkage').value) || 0;
+
+            const baseAgents = calculateErlangC(calls, aht, slObj, awt);
+            const scheduledAgents = Math.ceil(baseAgents / (1 - (shrinkage / 100)));
+
+            document.getElementById('resErlang').innerText = baseAgents;
+            document.getElementById('resProgramados').innerText = baseAgents > 0 ? scheduledAgents : 0;
+        }
+    </script>
+</body>
+</html>
