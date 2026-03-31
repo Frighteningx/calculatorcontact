@@ -42,7 +42,7 @@
             </svg>
             <h1 class="text-2xl font-bold tracking-wide">ESPEX <span class="text-espex-light font-light">WFM Suite</span></h1>
         </div>
-        <div class="text-sm font-medium">Planificación Inteligente</div>
+        <div class="text-sm font-medium">Dashboard & Planificación</div>
     </nav>
 
     <div class="max-w-7xl mx-auto p-6 space-y-6">
@@ -64,11 +64,11 @@
                     <input type="date" id="dateEnd" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
                 </div>
                 <div class="hidden filter-control">
-                    <label class="block text-xs text-gray-500 font-bold">Sentido</label>
+                    <label class="block text-xs text-gray-500 font-bold" title="Aplica a la Tabla y Gráficos generales (Erlang es siempre Entrante)">Sentido (Tabla/Gráfico)</label>
                     <select id="filterSentido" class="mt-1 w-full p-2 border rounded-md text-sm focus:ring-espex">
                         <option value="ALL">Todos</option>
-                        <option value="entrante" selected>Entrante</option>
-                        <option value="saliente">Saliente</option>
+                        <option value="entrante" selected>Solo Entrantes</option>
+                        <option value="saliente">Solo Salientes</option>
                     </select>
                 </div>
                 <div class="hidden filter-control">
@@ -85,50 +85,69 @@
             </div>
         </div>
 
+        <div id="kpiContainer" class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
+            <div class="glass-panel border-l-4 border-espex"><p class="text-sm text-gray-500 font-bold">Total Entrantes (Filtradas)</p><h3 id="kpiEntrantes" class="text-3xl font-bold text-espex-dark">0</h3></div>
+            <div class="glass-panel border-l-4 border-blue-500"><p class="text-sm text-gray-500 font-bold">Total Salientes (Filtradas)</p><h3 id="kpiSalientes" class="text-3xl font-bold text-blue-700">0</h3></div>
+            <div class="glass-panel border-l-4 border-yellow-500"><p class="text-sm text-gray-500 font-bold">Peak Entrantes (30 Min)</p><h3 id="kpiPeak" class="text-2xl font-bold text-yellow-700">0</h3><p id="kpiPeakTime" class="text-xs text-gray-400">--:--</p></div>
+            <div class="glass-panel border-l-4 border-purple-500"><p class="text-sm text-gray-500 font-bold">Casos Creados (Filtrados)</p><h3 id="kpiCasos" class="text-3xl font-bold text-purple-700">0</h3></div>
+        </div>
+
         <div id="dashboardContainer" class="hidden space-y-6">
             
-            <div class="glass-panel">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg text-espex-dark">Distribución Horaria (Bloques 30 Min)</h3>
-                    <span class="text-xs bg-espex-light text-espex-dark px-2 py-1 rounded-full font-bold">Base Histórica Filtrada</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-espex-dark">Curva de Llamados (Bloques 30 Min)</h3>
+                        <span id="badgeChartSentido" class="text-xs bg-espex-light text-espex-dark px-2 py-1 rounded-full font-bold">Solo Entrantes</span>
+                    </div>
+                    <div class="flex-grow relative h-64">
+                        <canvas id="chartDist30"></canvas>
+                    </div>
                 </div>
-                <div class="overflow-y-auto max-h-80 border rounded-lg shadow-inner">
-                    <table class="w-full text-sm text-left text-gray-600">
-                        <thead class="text-xs text-white uppercase bg-espex sticky top-0">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Horario</th>
-                                <th scope="col" class="px-6 py-3 text-center">Distribución (%)</th>
-                                <th scope="col" class="px-6 py-3 text-center">Vol. Histórico Base</th>
-                            </tr>
-                        </thead>
-                        <tbody id="distributionTableBody">
-                            </tbody>
-                    </table>
+
+                <div class="glass-panel flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-espex-dark">Tabla de Distribución Histórica</h3>
+                    </div>
+                    <div class="overflow-y-auto h-64 border rounded-lg shadow-inner">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-white uppercase bg-espex sticky top-0 z-10">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">Horario</th>
+                                    <th scope="col" class="px-4 py-3 text-center">Volumen</th>
+                                    <th scope="col" class="px-4 py-3 text-center">Distribución (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="distributionTableBody">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div class="glass-panel border-l-4 border-espex bg-gradient-to-br from-white to-espex-table">
                 <div class="flex items-center space-x-2 mb-2">
                     <svg class="w-6 h-6 text-espex-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <h3 class="font-bold text-xl text-espex-dark">Simulador de Requerimiento de Personal (Erlang C - 30 Min)</h3>
+                    <h3 class="font-bold text-xl text-espex-dark">Simulador Erlang C (Bloques 30 Min)</h3>
+                    <span class="text-xs bg-espex text-white px-2 py-1 rounded-full font-bold ml-2">ESTRICTO ENTRANTES</span>
                 </div>
-                <p class="text-sm text-gray-700 mb-4">Ajusta los parámetros operativos. La curva tomará los <strong>Llamados Diarios Proyectados</strong> y los repartirá según la distribución porcentual de la tabla superior para calcular cuántos agentes necesitas en cada bloque.</p>
+                <p class="text-sm text-gray-700 mb-4">Esta calculadora extrae la distribución <strong>exclusivamente de las llamadas entrantes</strong>. Aplica tu pronóstico diario (Forecast) y calcula los agentes concurrentes necesarios por media hora.</p>
                 
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-end bg-white p-4 rounded-lg shadow-sm border border-green-200 mb-6">
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">Llamadas Recibidas Diarias</label>
+                        <label class="block text-xs font-bold text-gray-600">Pronóstico Entrante Diario</label>
                         <input type="number" id="erlangVol" class="mt-1 w-full p-2 border rounded-md focus:ring-espex bg-blue-50 font-bold" value="3000">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">Duración llamadas (Seg)</label>
+                        <label class="block text-xs font-bold text-gray-600">AHT (Segundos)</label>
                         <input type="number" id="erlangAht" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="390">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">NDA / SL (%)</label>
+                        <label class="block text-xs font-bold text-gray-600">Nivel de Servicio (%)</label>
                         <input type="number" id="erlangSl" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="95">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600">Respuesta antes de (Seg)</label>
+                        <label class="block text-xs font-bold text-gray-600">Tiempo de Espera Obj (Seg)</label>
                         <input type="number" id="erlangAwt" class="mt-1 w-full p-2 border rounded-md focus:ring-espex" value="15">
                     </div>
                     <div>
@@ -137,19 +156,19 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-lg shadow-inner border border-gray-100">
-                    <canvas id="chartErlangCurve" height="100"></canvas>
+                <div class="bg-white p-4 rounded-lg shadow-inner border border-gray-100 h-64 relative">
+                    <canvas id="chartErlangCurve"></canvas>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass-panel">
-                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Flujo Salientes (Agentes)</h3>
-                    <canvas id="chartOut60"></canvas>
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Flujo Salientes General</h3>
+                    <div class="relative h-64"><canvas id="chartOut60"></canvas></div>
                 </div>
                 <div class="glass-panel">
                     <h3 class="font-bold text-lg mb-2 text-espex-dark">Casos Ingresados por Día</h3>
-                    <canvas id="chartCases"></canvas>
+                    <div class="relative h-64"><canvas id="chartCases"></canvas></div>
                 </div>
             </div>
 
@@ -160,9 +179,9 @@
         // Variables Globales
         let charts = {};
         let rawData = []; 
-        let distribution30Map = {}; // Guarda el % de distribución por bloque de 30 min
+        let inboundDistribution30Map = {}; // Distribución ESTRICTA Entrante para Erlang
 
-        // Evento Carga
+        // Carga de archivo
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -178,7 +197,7 @@
             });
         });
 
-        // Configurar Filtros Dinámicos
+        // Configurar Filtros
         function setupFilters() {
             let dates = [];
             let colas = new Set();
@@ -193,14 +212,12 @@
                 if (row['Agente']) agentes.add(row['Agente'].trim());
             });
             
-            // Fechas
             if (dates.length > 0) {
                 dates.sort();
                 document.getElementById('dateStart').value = dates[0];
                 document.getElementById('dateEnd').value = dates[dates.length - 1];
             }
 
-            // Población selects
             const popSelect = (id, set) => {
                 const el = document.getElementById(id);
                 el.innerHTML = '<option value="ALL">Todos/as</option>';
@@ -211,132 +228,193 @@
             popSelect('filterCola', colas);
             popSelect('filterAgente', agentes);
 
-            // Mostrar controles
             document.querySelectorAll('.filter-control').forEach(el => el.classList.remove('hidden'));
         }
 
         document.getElementById('btnFilter').addEventListener('click', applyFilters);
 
         function applyFilters() {
+            // Valores de los filtros
             const startDate = document.getElementById('dateStart').value;
             const endDate = document.getElementById('dateEnd').value;
-            const sentido = document.getElementById('filterSentido').value;
+            const sentidoFilter = document.getElementById('filterSentido').value; // Para Tabla y Gráfico
             const cola = document.getElementById('filterCola').value;
             const agente = document.getElementById('filterAgente').value;
 
-            const filteredData = rawData.filter(row => {
-                if (!row['Fecha']) return false;
+            // Actualizar el Badge visual
+            const badge = document.getElementById('badgeChartSentido');
+            if(sentidoFilter === 'entrante') { badge.innerText = "Solo Entrantes"; badge.className = "text-xs bg-espex-light text-espex-dark px-2 py-1 rounded-full font-bold"; }
+            else if(sentidoFilter === 'saliente') { badge.innerText = "Solo Salientes"; badge.className = "text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold"; }
+            else { badge.innerText = "Mixto (Entrantes + Salientes)"; badge.className = "text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-bold"; }
+
+            // Acumuladores
+            let kpiIn = 0, kpiOut = 0, kpiCases = 0;
+            let peakInCalls = 0;
+            let peakInTime = '--:--';
+
+            // Para Tabla y Gráfico Dist (Depende de Sentido)
+            let dist30Count = {}; 
+            let totalCallsDist = 0;
+
+            // Para Erlang (ESTRICTO ENTRANTE, IGNORA FILTRO DE SENTIDO)
+            let inbound30Count = {};
+            let totalInboundDist = 0;
+
+            // Para Salientes y Casos
+            let salientes60Total = {};
+            let casosPorDia = {};
+
+            // Inicializar bloques 30min
+            for(let h=0; h<24; h++) {
+                let hh = h.toString().padStart(2, '0');
+                dist30Count[`${hh}:00`] = 0; dist30Count[`${hh}:30`] = 0;
+                inbound30Count[`${hh}:00`] = 0; inbound30Count[`${hh}:30`] = 0;
+            }
+
+            // Procesar fila por fila
+            rawData.forEach(row => {
+                if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
                 const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
                 const rowCola = (row['Cola'] || '').trim();
                 const rowAgente = (row['Agente'] || '').trim();
-
-                let keep = (rowDate >= startDate && rowDate <= endDate);
-                if (sentido !== 'ALL') keep = keep && (rowSentido === sentido);
-                if (cola !== 'ALL') keep = keep && (rowCola === cola);
-                if (agente !== 'ALL') keep = keep && (rowAgente === agente);
-                
-                return keep;
-            });
-
-            processData(filteredData);
-        }
-
-        // Helper tiempo
-        function timeToSeconds(timeStr) {
-            if (!timeStr) return 0;
-            const parts = timeStr.split(':');
-            if (parts.length !== 3) return 0;
-            return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
-        }
-
-        function processData(data) {
-            let bloques30Count = {};
-            let salientes60Total = {};
-            let salientes60Agentes = {};
-            let casosPorDia = {};
-            
-            let totalCallsTable = 0;
-
-            // Inicializar array de bloques 30min
-            for(let h=0; h<24; h++) {
-                let hh = h.toString().padStart(2, '0');
-                bloques30Count[`${hh}:00`] = 0;
-                bloques30Count[`${hh}:30`] = 0;
-            }
-
-            data.forEach(row => {
-                const sentido = (row['Sentido'] || '').trim().toLowerCase();
-                const fechaRaw = row['Fecha'] || '';
                 const caso = (row['Caso'] || '').trim();
-                const agenteRow = (row['Agente'] || 'Desconocido').trim();
-                
-                if (!fechaRaw) return;
 
-                const dateParts = fechaRaw.split(' ');
-                const dateStr = dateParts[0]; 
-                const timeStr = dateParts[1] || '00:00:00';
-                
+                // Filtro Base (Fecha, Cola, Agente)
+                let baseMatch = (rowDate >= startDate && rowDate <= endDate);
+                if (cola !== 'ALL') baseMatch = baseMatch && (rowCola === cola);
+                if (agente !== 'ALL') baseMatch = baseMatch && (rowAgente === agente);
+
+                if (!baseMatch) return;
+
+                // Parseo de Hora
+                const timeStr = row['Fecha'].split(' ')[1] || '00:00:00';
                 const hourPart = timeStr.split(':')[0]; 
                 const minPart = parseInt(timeStr.split(':')[1]);
-                
-                const minBlock = minPart < 30 ? '00' : '30';
-                const blockKey = `${hourPart}:${minBlock}`;
-                const block60 = `${dateStr} ${hourPart}:00`;
+                const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
+                const block60 = `${rowDate} ${hourPart}:00`;
 
-                // Todo lo filtrado cuenta para la distribución de la tabla
-                bloques30Count[blockKey]++;
-                totalCallsTable++;
+                // KPIs Generales (De la data filtrada base)
+                if (rowSentido === 'entrante') kpiIn++;
+                if (rowSentido === 'saliente') kpiOut++;
+                if (caso !== '') { kpiCases++; casosPorDia[rowDate] = (casosPorDia[rowDate] || 0) + 1; }
 
-                // Casos
-                if (caso !== '') casosPorDia[dateStr] = (casosPorDia[dateStr] || 0) + 1;
+                // Lógica de Distribución (Tabla y Gráfico)
+                if (sentidoFilter === 'ALL' || sentidoFilter === rowSentido) {
+                    dist30Count[block30]++;
+                    totalCallsDist++;
+                }
 
-                // Salientes para su gráfico específico
-                if (sentido === 'saliente') {
+                // Lógica Erlang (ESTRICTO ENTRANTE)
+                if (rowSentido === 'entrante') {
+                    inbound30Count[block30]++;
+                    totalInboundDist++;
+                }
+
+                // Lógica Salientes Gráfico
+                if (rowSentido === 'saliente') {
                     salientes60Total[block60] = (salientes60Total[block60] || 0) + 1;
-                    if (!salientes60Agentes[agenteRow]) salientes60Agentes[agenteRow] = {};
-                    salientes60Agentes[agenteRow][block60] = (salientes60Agentes[agenteRow][block60] || 0) + 1;
                 }
             });
 
-            // Construir Tabla de Distribución
+            // Buscar Peak de Entrantes para el KPI
+            for (const [block, calls] of Object.entries(inbound30Count)) {
+                if (calls > peakInCalls) {
+                    peakInCalls = calls;
+                    peakInTime = block;
+                }
+            }
+
+            // Actualizar DOM KPIs
+            document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
+            document.getElementById('kpiSalientes').innerText = kpiOut.toLocaleString();
+            document.getElementById('kpiPeak').innerText = peakInCalls.toLocaleString();
+            document.getElementById('kpiPeakTime').innerText = peakInTime;
+            document.getElementById('kpiCasos').innerText = kpiCases.toLocaleString();
+
+            // Construir Tabla de Distribución y Chart de Distribución
             const tbody = document.getElementById('distributionTableBody');
             tbody.innerHTML = '';
-            distribution30Map = {}; // Reset
+            
+            const distLabels = [];
+            const distData = [];
 
-            Object.keys(bloques30Count).sort().forEach(block => {
-                const qty = bloques30Count[block];
-                const pct = totalCallsTable > 0 ? (qty / totalCallsTable) * 100 : 0;
-                distribution30Map[block] = pct / 100; // Guardar decimal para Erlang
+            // Limpiar Mapa Erlang
+            inboundDistribution30Map = {}; 
 
-                // Formatear rango (ej: 08:00 a 08:30)
+            Object.keys(dist30Count).sort().forEach(block => {
                 let [h, m] = block.split(':');
+                
+                // --- Generar datos para Erlang (Solo Entrantes) ---
+                const inQty = inbound30Count[block];
+                const inPct = totalInboundDist > 0 ? (inQty / totalInboundDist) : 0;
+                inboundDistribution30Map[block] = inPct; 
+
+                // --- Generar UI Tabla/Gráfico (Según Filtro) ---
+                const distQty = dist30Count[block];
+                const distPct = totalCallsDist > 0 ? (distQty / totalCallsDist) * 100 : 0;
+                
                 let endM = m === '00' ? '30' : '00';
                 let endH = m === '00' ? h : (parseInt(h)+1).toString().padStart(2, '0');
                 if (endH === '24') endH = '00';
                 const rangoStr = `${h}:${m} a ${endH}:${endM}`;
 
-                // Solo mostrar si tiene datos o es horario laboral (para no tener filas eternas en 0)
-                if(qty > 0 || (parseInt(h) >= 7 && parseInt(h) <= 20)) {
+                // Filtrar visualización (no mostrar toda la madrugada si está en 0)
+                if(distQty > 0 || (parseInt(h) >= 7 && parseInt(h) <= 20)) {
+                    distLabels.push(block);
+                    distData.push(distQty);
+
                     tbody.innerHTML += `
                         <tr class="bg-white border-b table-row-hover transition duration-150">
-                            <td class="px-6 py-2 font-medium text-gray-900">${rangoStr}</td>
-                            <td class="px-6 py-2 text-center text-espex-dark font-bold">${pct.toFixed(2)}%</td>
-                            <td class="px-6 py-2 text-center text-gray-500">${qty}</td>
+                            <td class="px-4 py-2 font-medium text-gray-900">${rangoStr}</td>
+                            <td class="px-4 py-2 text-center text-gray-700">${distQty}</td>
+                            <td class="px-4 py-2 text-center text-espex-dark font-bold">${distPct.toFixed(2)}%</td>
                         </tr>
                     `;
                 }
             });
 
+            document.getElementById('kpiContainer').classList.remove('hidden');
             document.getElementById('dashboardContainer').classList.remove('hidden');
 
+            // Dibujar Gráficos
+            renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
             renderChartCases('chartCases', casosPorDia);
-            renderChartOut('chartOut60', salientes60Total, salientes60Agentes);
+            renderChartOut('chartOut60', salientes60Total);
             
+            // Refrescar Erlang con la data pura de Entrantes
             updateErlangCurve();
         }
 
-        // Gráficos complementarios
+        // Gráfico de Distribución (Barras)
+        function renderDistChart(canvasId, labels, data, sentido) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if(charts[canvasId]) charts[canvasId].destroy();
+
+            // Color semántico
+            let bgColor = sentido === 'saliente' ? '#3b82f6' : '#22c55e'; // Azul o Verde
+            let labelText = sentido === 'saliente' ? 'Volumen Saliente' : (sentido === 'entrante' ? 'Volumen Entrante' : 'Volumen Total');
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelText,
+                        data: data,
+                        backgroundColor: bgColor,
+                        borderRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
         function renderChartCases(canvasId, dataObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
@@ -345,57 +423,39 @@
             charts[canvasId] = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: labels, datasets: [{ label: 'Casos', data: data, backgroundColor: '#a855f7', borderRadius: 4 }] },
-                options: { responsive: true, plugins: { legend: {display: false} } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
             });
         }
 
-        function renderChartOut(canvasId, totalObj, agentesObj) {
+        function renderChartOut(canvasId, totalObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
-
             const labels = Object.keys(totalObj).sort();
-            const topAgentes = Object.keys(agentesObj).sort((a, b) => {
-                const sumA = Object.values(agentesObj[a]).reduce((acc, val) => acc + val, 0);
-                const sumB = Object.values(agentesObj[b]).reduce((acc, val) => acc + val, 0);
-                return sumB - sumA;
-            }).slice(0, 5);
-
-            const datasets = [{
-                label: 'Total Salientes',
-                data: labels.map(l => totalObj[l] || 0),
-                borderColor: '#1d4ed8', backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 5], tension: 0.3
-            }];
-
-            const colors = ['#f59e0b', '#10b981', '#ef4444', '#6366f1', '#ec4899'];
-            topAgentes.forEach((agente, idx) => {
-                datasets.push({
-                    label: agente,
-                    data: labels.map(l => agentesObj[agente][l] || 0),
-                    borderColor: colors[idx % colors.length], backgroundColor: 'transparent', borderWidth: 1.5, tension: 0.3
-                });
-            });
-
+            
             charts[canvasId] = new Chart(ctx, {
                 type: 'line',
-                data: { labels: labels.map(l => l.substring(5, 16)), datasets: datasets },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
+                data: { 
+                    labels: labels.map(l => l.substring(5, 16)), 
+                    datasets: [{
+                        label: 'Total Salientes x Hora',
+                        data: labels.map(l => totalObj[l] || 0),
+                        borderColor: '#1d4ed8', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, fill: true, backgroundColor: '#1d4ed820'
+                    }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        // --- ERLANG C (Ajustado para intervalos de 30 min) ---
+        // --- ERLANG C (Estricto Entrantes) ---
         function getErlangCPW(agents, traffic) {
             let erlangB = traffic / (1 + traffic);
-            for (let i = 2; i <= agents; i++) {
-                erlangB = (traffic * erlangB) / (i + traffic * erlangB);
-            }
+            for (let i = 2; i <= agents; i++) { erlangB = (traffic * erlangB) / (i + traffic * erlangB); }
             let erlangC = erlangB / (1 - (traffic / agents) * (1 - erlangB));
             return Math.max(0, Math.min(1, erlangC));
         }
 
         function calculateErlangC(callsInInterval, intervalMins, ahtSeconds, targetSL, targetTime) {
             if (callsInInterval <= 0 || ahtSeconds <= 0) return 0;
-            // Para Erlang, Tráfico = Tasa Horaria de Llamadas * (AHT en Horas)
-            // Tasa Horaria = Llamadas del Intervalo * (60 / Minutos del Intervalo)
             let hourlyCalls = callsInInterval * (60 / intervalMins);
             let traffic = (hourlyCalls * ahtSeconds) / 3600;
             
@@ -406,9 +466,7 @@
             while (sl < (targetSL / 100) && agents < maxIterations) {
                 let pw = getErlangCPW(agents, traffic);
                 sl = 1 - (pw * Math.exp(-(agents - traffic) * (targetTime / ahtSeconds)));
-                if (sl < (targetSL / 100)) {
-                    agents++;
-                }
+                if (sl < (targetSL / 100)) agents++;
             }
             return agents;
         }
@@ -420,25 +478,20 @@
             const awt = parseFloat(document.getElementById('erlangAwt').value) || 15;
             const abd = parseFloat(document.getElementById('erlangAbd').value) || 5;
 
-            // Factor de corrección de volumen (Restamos el abandono para dimensionar solo atendidas)
             const factorEfectivo = 1 - (abd / 100);
 
             const labelsList = [];
             const dataAgentes = [];
             const dataVolumen = [];
 
-            Object.keys(distribution30Map).sort().forEach(block => {
-                let pct = distribution30Map[block];
-                
-                // Cortar visualización para no mostrar toda la madrugada vacía, filtramos horario hábil referencial
+            Object.keys(inboundDistribution30Map).sort().forEach(block => {
+                let inPct = inboundDistribution30Map[block]; // Esto usa SIEMPRE la data pura entrante
                 let h = parseInt(block.split(':')[0]);
-                if(pct > 0 || (h >= 7 && h <= 20)) {
+                
+                if(inPct > 0 || (h >= 7 && h <= 20)) {
                     labelsList.push(block);
-                    
-                    // Volumen proyectado para estos 30 minutos
-                    let calls30m = (volDiario * pct) * factorEfectivo;
+                    let calls30m = (volDiario * inPct) * factorEfectivo;
                     dataVolumen.push(Math.round(calls30m));
-                    
                     let baseAgents = calculateErlangC(calls30m, 30, aht, slObj, awt);
                     dataAgentes.push(baseAgents);
                 }
@@ -453,33 +506,16 @@
                 data: {
                     labels: labelsList,
                     datasets: [
-                        {
-                            label: 'Agentes Requeridos (Cada 30 min)',
-                            data: dataAgentes,
-                            backgroundColor: '#22c55e', 
-                            borderRadius: 4,
-                            order: 2
-                        },
-                        {
-                            label: 'Vol. Proyectado (- Abandono)',
-                            data: dataVolumen,
-                            type: 'line',
-                            borderColor: '#1e40af', 
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            yAxisID: 'y1',
-                            order: 1
-                        }
+                        { label: 'Agentes Erlang Requeridos', data: dataAgentes, backgroundColor: '#166534', borderRadius: 4, order: 2 },
+                        { label: 'Vol. Entrante Proyectado', data: dataVolumen, type: 'line', borderColor: '#eab308', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, yAxisID: 'y1', order: 1 }
                     ]
                 },
                 options: { 
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { tooltip: { mode: 'index', intersect: false } },
                     scales: {
                         y: { beginAtZero: true, title: { display: true, text: 'Nº Agentes' } },
-                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Llamadas (30m)' } }
+                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Llamadas Entrantes (30m)' } }
                     }
                 }
             });
