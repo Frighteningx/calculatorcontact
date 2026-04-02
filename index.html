@@ -162,7 +162,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass-panel">
-                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Flujo Salientes General</h3>
+                    <h3 class="font-bold text-lg mb-2 text-espex-dark">Promedio Salientes por Hora (08:00 a 19:00)</h3>
                     <div class="relative h-64"><canvas id="chartOut60"></canvas></div>
                 </div>
                 <div class="glass-panel">
@@ -347,7 +347,12 @@
             let peakInCalls = 0; let peakInTime = '--:--';
             let dist30Count = {}; let totalCallsDist = 0;
             let inbound30Count = {}; let totalInboundDist = 0;
-            let salientes60Total = {}; let casosPorDia = {};
+            let casosPorDia = {};
+            
+            // Acumuladores Nuevos para Gráfico de Promedio Salientes
+            let salientesPorHora = {}; 
+            for(let h=8; h<=19; h++) salientesPorHora[h.toString().padStart(2, '0')] = 0;
+            let uniqueDaysFiltered = new Set();
 
             // Acumuladores Nuevos (Inteligencia Operativa)
             let tipificaciones = {};
@@ -383,11 +388,12 @@
 
                 if (!baseMatch) return;
 
+                uniqueDaysFiltered.add(rowDate); // Track unique days for averages
+
                 const timeStr = row['Fecha'].split(' ')[1] || '00:00:00';
                 const hourPart = timeStr.split(':')[0]; 
                 const minPart = parseInt(timeStr.split(':')[1]);
                 const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
-                const block60 = `${rowDate} ${hourPart}:00`;
 
                 // KPIs Clásicos
                 if (rowSentido === 'entrante') kpiIn++;
@@ -402,9 +408,8 @@
                     inbound30Count[block30]++; totalInboundDist++;
 
                     // --- NUEVO: Data para Forecast ---
-                    // Fecha formato YYYY-MM-DDT00:00:00 para evitar desface de zona horaria local
                     const rowDateObj = new Date(rowDate + 'T00:00:00'); 
-                    const dow = rowDateObj.getDay(); // 0=Sun, 1=Mon
+                    const dow = rowDateObj.getDay(); 
                     uniqueDatesByDow[dow].add(rowDate);
                     forecastDays[dow][block30]++;
 
@@ -435,7 +440,13 @@
                     }
                 }
 
-                if (rowSentido === 'saliente') salientes60Total[block60] = (salientes60Total[block60] || 0) + 1;
+                // Lógica de Promedio Salientes
+                if (rowSentido === 'saliente') {
+                    const hNum = parseInt(hourPart);
+                    if (hNum >= 8 && hNum <= 19) {
+                        salientesPorHora[hourPart]++;
+                    }
+                }
             });
 
             // Peak In
@@ -443,10 +454,18 @@
                 if (calls > peakInCalls) { peakInCalls = calls; peakInTime = block; }
             }
 
+            // Calcular promedios salientes por hora (8 a 19 hrs)
+            const totalDays = uniqueDaysFiltered.size || 1;
+            let avgSalientesPorHora = {};
+            for(let h=8; h<=19; h++) {
+                let hh = h.toString().padStart(2, '0');
+                avgSalientesPorHora[`${hh}:00`] = salientesPorHora[hh] / totalDays;
+            }
+
             // --- PROCESAR MODELO DE FORECAST ---
             globalForecastModel = {};
             for(let d=0; d<=6; d++) {
-                let daysCount = uniqueDatesByDow[d].size || 1; // Evitar división por cero
+                let daysCount = uniqueDatesByDow[d].size || 1; 
                 globalForecastModel[d] = {};
                 for(let h=0; h<24; h++) {
                     let hh = h.toString().padStart(2, '0');
@@ -503,7 +522,7 @@
             // Renderizar Todo
             renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
             renderChartCases('chartCases', casosPorDia);
-            renderChartOut('chartOut60', salientes60Total);
+            renderChartOut('chartOut60', avgSalientesPorHora); // Se llama al nuevo gráfico de promedio saliente
             
             // Renderizar Nuevos
             renderPareto(tipificaciones);
@@ -535,13 +554,28 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
             });
         }
-        function renderChartOut(canvasId, totalObj) {
+        // NUEVA FUNCIÓN PARA PROMEDIO DE SALIENTES (Reemplaza al anterior Flujo Salientes)
+        function renderChartOut(canvasId, avgObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
-            const labels = Object.keys(totalObj).sort();
+            const labels = Object.keys(avgObj).sort();
+            
             charts[canvasId] = new Chart(ctx, {
-                type: 'line', data: { labels: labels.map(l => l.substring(5, 16)), datasets: [{ label: 'Salientes', data: labels.map(l => totalObj[l] || 0), borderColor: '#1d4ed8', backgroundColor: '#1d4ed820', borderWidth: 2, fill: true, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                type: 'bar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{
+                        label: 'Promedio Salientes',
+                        data: labels.map(l => avgObj[l].toFixed(1)),
+                        backgroundColor: '#3b82f6', 
+                        borderRadius: 4
+                    }] 
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { y: { beginAtZero: true } } 
+                }
             });
         }
 
