@@ -95,12 +95,28 @@
         <div id="dashboardContainer" class="hidden space-y-6">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
                 <div class="glass-panel flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex justify-between items-center mb-2">
                         <h3 class="font-bold text-lg text-espex-dark">Curva de Llamados (Bloques 30 Min)</h3>
                         <span id="badgeChartSentido" class="text-xs bg-espex-light text-espex-dark px-2 py-1 rounded-full font-bold">Solo Entrantes</span>
                     </div>
-                    <div class="flex-grow relative h-64">
+                    
+                    <div class="flex items-center space-x-2 mb-4 bg-gray-50 p-2 rounded border border-gray-200 shadow-sm">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Desde</label>
+                            <input type="date" id="localChartStart" class="p-1 border rounded text-xs focus:ring-espex bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Hasta</label>
+                            <input type="date" id="localChartEnd" class="p-1 border rounded text-xs focus:ring-espex bg-white">
+                        </div>
+                        <div class="mt-auto">
+                            <button id="btnLocalChart" class="bg-espex text-white px-3 py-1 rounded hover:bg-espex-dark font-bold text-xs transition">Filtrar Gráfico</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow relative h-56">
                         <canvas id="chartDist30"></canvas>
                     </div>
                 </div>
@@ -265,9 +281,7 @@
         let charts = {};
         let rawData = []; 
         let inboundDistribution30Map = {}; 
-        
-        // Variables Globales Nuevas (Forecast)
-        let globalForecastModel = {}; // Guarda promedios por Día de la Semana (0-6)
+        let globalForecastModel = {}; 
 
         // Carga de archivo
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
@@ -304,6 +318,10 @@
                 dates.sort();
                 document.getElementById('dateStart').value = dates[0];
                 document.getElementById('dateEnd').value = dates[dates.length - 1];
+                
+                // NUEVO: Setear fechas iniciales para el filtro local del gráfico
+                document.getElementById('localChartStart').value = dates[0];
+                document.getElementById('localChartEnd').value = dates[dates.length - 1];
             }
 
             const popSelect = (id, set) => {
@@ -328,6 +346,9 @@
         }
 
         document.getElementById('btnFilter').addEventListener('click', applyFilters);
+        
+        // Listener para el Botón del Filtro Local del Gráfico
+        document.getElementById('btnLocalChart').addEventListener('click', updateLocalChartDist30);
 
         function applyFilters() {
             // Valores filtros
@@ -342,25 +363,21 @@
             else if(sentidoFilter === 'saliente') { badge.innerText = "Solo Salientes"; badge.className = "text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold"; }
             else { badge.innerText = "Mixto (Entrantes + Salientes)"; badge.className = "text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-bold"; }
 
-            // Acumuladores Clásicos
             let kpiIn = 0, kpiOut = 0, kpiCases = 0;
             let peakInCalls = 0; let peakInTime = '--:--';
             let dist30Count = {}; let totalCallsDist = 0;
             let inbound30Count = {}; let totalInboundDist = 0;
             let casosPorDia = {};
             
-            // Acumuladores Nuevos para Gráfico de Promedio Salientes
             let salientesPorHora = {}; 
             for(let h=8; h<=19; h++) salientesPorHora[h.toString().padStart(2, '0')] = 0;
             let uniqueDaysFiltered = new Set();
 
-            // Acumuladores Nuevos (Inteligencia Operativa)
             let tipificaciones = {};
             let abandonoTiempos = { '0-10s':0, '11-20s':0, '21-30s':0, '31-40s':0, '41-50s':0, '51-60s':0, '+60s':0 };
             let slaAtendidas = 0; let slaCumplido = 0;
             let agenteTmo = {};
 
-            // Acumuladores Nuevos (Forecast - Días de la semana)
             let forecastDays = { 0:{}, 1:{}, 2:{}, 3:{}, 4:{}, 5:{}, 6:{} };
             let uniqueDatesByDow = { 0:new Set(), 1:new Set(), 2:new Set(), 3:new Set(), 4:new Set(), 5:new Set(), 6:new Set() };
 
@@ -371,7 +388,6 @@
                 for(let d=0; d<=6; d++) { forecastDays[d][`${hh}:00`] = 0; forecastDays[d][`${hh}:30`] = 0; }
             }
 
-            // Procesar fila por fila
             rawData.forEach(row => {
                 if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
@@ -388,14 +404,13 @@
 
                 if (!baseMatch) return;
 
-                uniqueDaysFiltered.add(rowDate); // Track unique days for averages
+                uniqueDaysFiltered.add(rowDate); 
 
                 const timeStr = row['Fecha'].split(' ')[1] || '00:00:00';
                 const hourPart = timeStr.split(':')[0]; 
                 const minPart = parseInt(timeStr.split(':')[1]);
                 const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
 
-                // KPIs Clásicos
                 if (rowSentido === 'entrante') kpiIn++;
                 if (rowSentido === 'saliente') kpiOut++;
                 if (caso !== '') { kpiCases++; casosPorDia[rowDate] = (casosPorDia[rowDate] || 0) + 1; }
@@ -407,13 +422,11 @@
                 if (rowSentido === 'entrante') {
                     inbound30Count[block30]++; totalInboundDist++;
 
-                    // --- NUEVO: Data para Forecast ---
                     const rowDateObj = new Date(rowDate + 'T00:00:00'); 
                     const dow = rowDateObj.getDay(); 
                     uniqueDatesByDow[dow].add(rowDate);
                     forecastDays[dow][block30]++;
 
-                    // --- NUEVO: Inteligencia Operativa ---
                     tipificaciones[tipificacion] = (tipificaciones[tipificacion] || 0) + 1;
 
                     const tEspera = timeToSeconds(row['Tiempo de Espera']);
@@ -428,7 +441,6 @@
                         else if (tEspera <= 60) abandonoTiempos['51-60s']++;
                         else abandonoTiempos['+60s']++;
                     } else {
-                        // Atendidas
                         slaAtendidas++;
                         if (tEspera <= 20) slaCumplido++;
 
@@ -440,7 +452,6 @@
                     }
                 }
 
-                // Lógica de Promedio Salientes
                 if (rowSentido === 'saliente') {
                     const hNum = parseInt(hourPart);
                     if (hNum >= 8 && hNum <= 19) {
@@ -449,12 +460,10 @@
                 }
             });
 
-            // Peak In
             for (const [block, calls] of Object.entries(inbound30Count)) {
                 if (calls > peakInCalls) { peakInCalls = calls; peakInTime = block; }
             }
 
-            // Calcular promedios salientes por hora (8 a 19 hrs)
             const totalDays = uniqueDaysFiltered.size || 1;
             let avgSalientesPorHora = {};
             for(let h=8; h<=19; h++) {
@@ -462,7 +471,6 @@
                 avgSalientesPorHora[`${hh}:00`] = salientesPorHora[hh] / totalDays;
             }
 
-            // --- PROCESAR MODELO DE FORECAST ---
             globalForecastModel = {};
             for(let d=0; d<=6; d++) {
                 let daysCount = uniqueDatesByDow[d].size || 1; 
@@ -474,22 +482,18 @@
                 }
             }
 
-            // Actualizar DOM Clásico
             document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
             document.getElementById('kpiSalientes').innerText = kpiOut.toLocaleString();
             document.getElementById('kpiPeak').innerText = peakInCalls.toLocaleString();
             document.getElementById('kpiPeakTime').innerText = peakInTime;
             document.getElementById('kpiCasos').innerText = kpiCases.toLocaleString();
 
-            // Actualizar DOM Nuevo (SLA)
             const slaPct = slaAtendidas > 0 ? ((slaCumplido / slaAtendidas) * 100).toFixed(1) : 0;
             document.getElementById('kpiSlaReal').innerText = `${slaPct}%`;
             document.getElementById('kpiSlaVol').innerText = `${slaCumplido} / ${slaAtendidas} atendidas`;
 
-            // Construir Tabla Dist
             const tbody = document.getElementById('distributionTableBody');
             tbody.innerHTML = '';
-            const distLabels = []; const distData = [];
             inboundDistribution30Map = {}; 
 
             Object.keys(dist30Count).sort().forEach(block => {
@@ -506,7 +510,6 @@
                 const rangoStr = `${h}:${m} a ${endH}:${endM}`;
 
                 if(distQty > 0 || (parseInt(h) >= 7 && parseInt(h) <= 20)) {
-                    distLabels.push(block); distData.push(distQty);
                     tbody.innerHTML += `
                         <tr class="bg-white border-b table-row-hover transition duration-150">
                             <td class="px-4 py-2 font-medium text-gray-900">${rangoStr}</td>
@@ -519,19 +522,77 @@
             document.getElementById('kpiContainer').classList.remove('hidden');
             document.getElementById('dashboardContainer').classList.remove('hidden');
 
-            // Renderizar Todo
-            renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
             renderChartCases('chartCases', casosPorDia);
-            renderChartOut('chartOut60', avgSalientesPorHora); // Se llama al nuevo gráfico de promedio saliente
+            renderChartOut('chartOut60', avgSalientesPorHora); 
             
-            // Renderizar Nuevos
             renderPareto(tipificaciones);
             renderAbandono(abandonoTiempos);
             renderAhtAgentes(agenteTmo);
 
-            // Refrescar Motores Erlang & Forecast
             updateErlangCurve();
             updateForecastUI();
+
+            // NUEVO: Llamar la actualización del gráfico local
+            updateLocalChartDist30();
+        }
+
+        // --- NUEVA FUNCIÓN: Actualizar el gráfico con su filtro local y rango 07:00 a 20:30 ---
+        function updateLocalChartDist30() {
+            const localStart = document.getElementById('localChartStart').value;
+            const localEnd = document.getElementById('localChartEnd').value;
+            const sentidoFilter = document.getElementById('filterSentido').value;
+            const cola = document.getElementById('filterCola').value;
+            const agente = document.getElementById('filterAgente').value;
+
+            // Inicializar contadores del gráfico estricto desde 07:00 hasta 20:30
+            let localDist30Count = {};
+            for(let h=7; h<=20; h++) {
+                let hh = h.toString().padStart(2, '0');
+                localDist30Count[`${hh}:00`] = 0;
+                localDist30Count[`${hh}:30`] = 0;
+            }
+
+            rawData.forEach(row => {
+                if (!row['Fecha']) return;
+                const rowDate = row['Fecha'].split(' ')[0];
+                const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
+                const rowCola = (row['Cola'] || '').trim();
+                const rowAgente = (row['Agente'] || '').trim();
+
+                // Validar Filtros
+                let baseMatch = (rowDate >= localStart && rowDate <= localEnd);
+                if (cola !== 'ALL') baseMatch = baseMatch && (rowCola === cola);
+                if (agente !== 'ALL') baseMatch = baseMatch && (rowAgente === agente);
+                
+                if (!baseMatch) return;
+
+                if (sentidoFilter === 'ALL' || sentidoFilter === rowSentido) {
+                    const timeStr = row['Fecha'].split(' ')[1] || '00:00:00';
+                    const hourPart = timeStr.split(':')[0]; 
+                    const minPart = parseInt(timeStr.split(':')[1]);
+                    
+                    const hNum = parseInt(hourPart);
+                    // Acumular solo si está en la franja obligatoria (7 a 20 hrs)
+                    if (hNum >= 7 && hNum <= 20) {
+                        const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
+                        if (localDist30Count[block30] !== undefined) {
+                            localDist30Count[block30]++;
+                        }
+                    }
+                }
+            });
+
+            // Generar arrays fijos para renderizar la curva completa sin huecos
+            const distLabels = [];
+            const distData = [];
+            for(let h=7; h<=20; h++) {
+                let hh = h.toString().padStart(2, '0');
+                distLabels.push(`${hh}:00`); distData.push(localDist30Count[`${hh}:00`]);
+                distLabels.push(`${hh}:30`); distData.push(localDist30Count[`${hh}:30`]);
+            }
+
+            // Llamar al renderizador clásico
+            renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
         }
 
         // --- Gráficos Clásicos ---
@@ -554,7 +615,6 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
             });
         }
-        // NUEVA FUNCIÓN PARA PROMEDIO DE SALIENTES (Reemplaza al anterior Flujo Salientes)
         function renderChartOut(canvasId, avgObj) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
@@ -584,7 +644,6 @@
             const ctx = document.getElementById('chartPareto').getContext('2d');
             if(charts['chartPareto']) charts['chartPareto'].destroy();
             
-            // Ordenar y sacar Top 10
             const sortedTips = Object.keys(tipiObj).sort((a,b) => tipiObj[b] - tipiObj[a]).slice(0, 10);
             const data = sortedTips.map(t => tipiObj[t]);
 
@@ -592,7 +651,7 @@
                 type: 'bar',
                 data: { labels: sortedTips, datasets: [{ label: 'Volumen', data: data, backgroundColor: '#f59e0b', borderRadius: 4 }] },
                 options: { 
-                    indexAxis: 'y', // Pareto horizontal es más legible para textos largos
+                    indexAxis: 'y', 
                     responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } 
                 }
             });
@@ -613,14 +672,12 @@
             const ctx = document.getElementById('chartAhtAgentes').getContext('2d');
             if(charts['chartAhtAgentes']) charts['chartAhtAgentes'].destroy();
             
-            // Filtrar agentes con muy pocas llamadas (ruido) y calcular promedio
             let validAgents = [];
             for (const [agente, stats] of Object.entries(ahtObj)) {
                 if(stats.count > 5) {
                     validAgents.push({ name: agente, aht: Math.round(stats.sum / stats.count) });
                 }
             }
-            // Ordenar de mayor a menor AHT
             validAgents.sort((a,b) => b.aht - a.aht);
             
             charts['chartAhtAgentes'] = new Chart(ctx, {
@@ -702,13 +759,11 @@
 
         // --- NUEVO: Motor de Forecast ---
         function updateForecastUI() {
-            // Leer parámetros de Forecast
-            const targetDow = document.getElementById('forecastDay').value; // 0-6
+            const targetDow = document.getElementById('forecastDay').value; 
             const adjustPct = parseFloat(document.getElementById('forecastAdjust').value) || 0;
             const aht = parseFloat(document.getElementById('forecastAht').value) || 390;
             const shrinkage = parseFloat(document.getElementById('forecastShrinkage').value) || 30;
             
-            // Asumir SLA de la app principal por ahora
             const slObj = parseFloat(document.getElementById('erlangSl').value) || 95;
             const awt = parseFloat(document.getElementById('erlangAwt').value) || 15;
 
