@@ -31,6 +31,13 @@
         ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 4px;}
         ::-webkit-scrollbar-thumb:hover { background: #166534; }
         .table-row-hover:hover { background-color: #dcfce7; }
+        
+        /* Estilos específicos para el Roster Interactivo */
+        .roster-cell { cursor: cell; user-select: none; transition: background-color 0.1s; }
+        .roster-cell.active { background-color: #22c55e; border-color: #166534; }
+        .roster-cell:hover { opacity: 0.8; }
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .sticky-head-col { position: sticky; left: 0; z-index: 20; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -95,7 +102,6 @@
         <div id="dashboardContainer" class="hidden space-y-6">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 <div class="glass-panel flex flex-col">
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="font-bold text-lg text-espex-dark">Curva de Llamados (Bloques 30 Min)</h3>
@@ -273,6 +279,49 @@
                 </div>
             </div>
 
+            <div class="mt-10 border-t-2 border-espex-light pt-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-espex-dark flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Asignación de Turnos (Roster Interactivo)
+                    </h2>
+                    <button id="btnAddAgent" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-bold text-sm shadow transition">
+                        + Agregar Agente al Pool
+                    </button>
+                </div>
+                
+                <div class="glass-panel border-l-4 border-yellow-500 bg-white p-0 overflow-hidden">
+                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                        <p class="text-sm text-gray-600">
+                            <strong>Instrucciones:</strong> Haz clic y arrastra el ratón sobre las celdas para <span class="text-green-600 font-bold">pintar</span> (asignar) o borrar los horarios de cada agente. La meta <strong>"Requerido Erlang"</strong> se alimenta de la calculadora superior en tiempo real.
+                        </p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-center border-collapse" id="rosterTable" style="min-width: 1200px;">
+                            <thead class="bg-gray-100 border-b-2 border-gray-200">
+                                <tr id="rosterHeaderRow">
+                                    <th class="p-2 border-r sticky-head-col sticky-col w-48 text-left text-gray-700">Nombre Agente</th>
+                                    </tr>
+                            </thead>
+                            <tbody id="rosterBody">
+                                </tbody>
+                            <tfoot class="font-bold bg-gray-50 border-t-2 border-gray-300">
+                                <tr class="text-blue-700">
+                                    <td class="p-2 border-r sticky-col text-right">Total Programado:</td>
+                                    </tr>
+                                <tr class="text-espex-dark bg-espex-light">
+                                    <td class="p-2 border-r sticky-col text-right" title="Viene de la calculadora Erlang superior">Requerido Erlang:</td>
+                                    </tr>
+                                <tr id="rosterBrechaRow" class="text-gray-800">
+                                    <td class="p-2 border-r sticky-col text-right">Brecha (Faltan/Sobran):</td>
+                                    </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -282,6 +331,9 @@
         let rawData = []; 
         let inboundDistribution30Map = {}; 
         let globalForecastModel = {}; 
+        
+        // --- NUEVA VARIABLE GLOBAL PARA COMUNICAR ERLANG CON EL ROSTER ---
+        let globalErlangRequirements = {}; // Guarda agentes requeridos por bloque "HH:mm"
 
         // Carga de archivo
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
@@ -319,7 +371,6 @@
                 document.getElementById('dateStart').value = dates[0];
                 document.getElementById('dateEnd').value = dates[dates.length - 1];
                 
-                // NUEVO: Setear fechas iniciales para el filtro local del gráfico
                 document.getElementById('localChartStart').value = dates[0];
                 document.getElementById('localChartEnd').value = dates[dates.length - 1];
             }
@@ -337,7 +388,6 @@
             document.querySelectorAll('.filter-control').forEach(el => el.classList.remove('hidden'));
         }
 
-        // Helper tiempo
         function timeToSeconds(timeStr) {
             if (!timeStr) return 0;
             const parts = timeStr.split(':');
@@ -346,12 +396,9 @@
         }
 
         document.getElementById('btnFilter').addEventListener('click', applyFilters);
-        
-        // Listener para el Botón del Filtro Local del Gráfico
         document.getElementById('btnLocalChart').addEventListener('click', updateLocalChartDist30);
 
         function applyFilters() {
-            // Valores filtros
             const startDate = document.getElementById('dateStart').value;
             const endDate = document.getElementById('dateEnd').value;
             const sentidoFilter = document.getElementById('filterSentido').value;
@@ -531,12 +578,9 @@
 
             updateErlangCurve();
             updateForecastUI();
-
-            // NUEVO: Llamar la actualización del gráfico local
             updateLocalChartDist30();
         }
 
-        // --- NUEVA FUNCIÓN: Actualizar el gráfico con su filtro local y rango 07:00 a 20:30 ---
         function updateLocalChartDist30() {
             const localStart = document.getElementById('localChartStart').value;
             const localEnd = document.getElementById('localChartEnd').value;
@@ -544,7 +588,6 @@
             const cola = document.getElementById('filterCola').value;
             const agente = document.getElementById('filterAgente').value;
 
-            // Inicializar contadores del gráfico estricto desde 07:00 hasta 20:30
             let localDist30Count = {};
             for(let h=7; h<=20; h++) {
                 let hh = h.toString().padStart(2, '0');
@@ -559,7 +602,6 @@
                 const rowCola = (row['Cola'] || '').trim();
                 const rowAgente = (row['Agente'] || '').trim();
 
-                // Validar Filtros
                 let baseMatch = (rowDate >= localStart && rowDate <= localEnd);
                 if (cola !== 'ALL') baseMatch = baseMatch && (rowCola === cola);
                 if (agente !== 'ALL') baseMatch = baseMatch && (rowAgente === agente);
@@ -572,7 +614,6 @@
                     const minPart = parseInt(timeStr.split(':')[1]);
                     
                     const hNum = parseInt(hourPart);
-                    // Acumular solo si está en la franja obligatoria (7 a 20 hrs)
                     if (hNum >= 7 && hNum <= 20) {
                         const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
                         if (localDist30Count[block30] !== undefined) {
@@ -582,7 +623,6 @@
                 }
             });
 
-            // Generar arrays fijos para renderizar la curva completa sin huecos
             const distLabels = [];
             const distData = [];
             for(let h=7; h<=20; h++) {
@@ -591,7 +631,6 @@
                 distLabels.push(`${hh}:30`); distData.push(localDist30Count[`${hh}:30`]);
             }
 
-            // Llamar al renderizador clásico
             renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
         }
 
@@ -619,41 +658,22 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
             const labels = Object.keys(avgObj).sort();
-            
             charts[canvasId] = new Chart(ctx, {
                 type: 'bar', 
-                data: { 
-                    labels: labels, 
-                    datasets: [{
-                        label: 'Promedio Salientes',
-                        data: labels.map(l => avgObj[l].toFixed(1)),
-                        backgroundColor: '#3b82f6', 
-                        borderRadius: 4
-                    }] 
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { y: { beginAtZero: true } } 
-                }
+                data: { labels: labels, datasets: [{ label: 'Promedio Salientes', data: labels.map(l => avgObj[l].toFixed(1)), backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
 
-        // --- Gráficos Nuevos (Inteligencia) ---
         function renderPareto(tipiObj) {
             const ctx = document.getElementById('chartPareto').getContext('2d');
             if(charts['chartPareto']) charts['chartPareto'].destroy();
-            
             const sortedTips = Object.keys(tipiObj).sort((a,b) => tipiObj[b] - tipiObj[a]).slice(0, 10);
             const data = sortedTips.map(t => tipiObj[t]);
-
             charts['chartPareto'] = new Chart(ctx, {
                 type: 'bar',
                 data: { labels: sortedTips, datasets: [{ label: 'Volumen', data: data, backgroundColor: '#f59e0b', borderRadius: 4 }] },
-                options: { 
-                    indexAxis: 'y', 
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } 
-                }
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
             });
         }
 
@@ -671,26 +691,18 @@
         function renderAhtAgentes(ahtObj) {
             const ctx = document.getElementById('chartAhtAgentes').getContext('2d');
             if(charts['chartAhtAgentes']) charts['chartAhtAgentes'].destroy();
-            
             let validAgents = [];
             for (const [agente, stats] of Object.entries(ahtObj)) {
-                if(stats.count > 5) {
-                    validAgents.push({ name: agente, aht: Math.round(stats.sum / stats.count) });
-                }
+                if(stats.count > 5) validAgents.push({ name: agente, aht: Math.round(stats.sum / stats.count) });
             }
             validAgents.sort((a,b) => b.aht - a.aht);
-            
             charts['chartAhtAgentes'] = new Chart(ctx, {
                 type: 'bar',
-                data: { 
-                    labels: validAgents.map(a => a.name), 
-                    datasets: [{ label: 'AHT (Seg)', data: validAgents.map(a => a.aht), backgroundColor: '#0ea5e9', borderRadius: 4 }] 
-                },
+                data: { labels: validAgents.map(a => a.name), datasets: [{ label: 'AHT (Seg)', data: validAgents.map(a => a.aht), backgroundColor: '#0ea5e9', borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
             });
         }
 
-        // --- ERLANG C BASE ---
         function getErlangCPW(agents, traffic) {
             let erlangB = traffic / (1 + traffic);
             for (let i = 2; i <= agents; i++) { erlangB = (traffic * erlangB) / (i + traffic * erlangB); }
@@ -704,7 +716,6 @@
             let traffic = (hourlyCalls * ahtSeconds) / 3600;
             let agents = Math.floor(traffic) + 1; 
             let sl = 0; let maxIterations = 500; 
-            
             while (sl < (targetSL / 100) && agents < maxIterations) {
                 let pw = getErlangCPW(agents, traffic);
                 sl = 1 - (pw * Math.exp(-(agents - traffic) * (targetTime / ahtSeconds)));
@@ -713,7 +724,6 @@
             return agents;
         }
 
-        // Erlang Clásico
         function updateErlangCurve() {
             const volDiario = parseFloat(document.getElementById('erlangVol').value) || 0;
             const aht = parseFloat(document.getElementById('erlangAht').value) || 390;
@@ -723,6 +733,13 @@
 
             const factorEfectivo = 1 - (abd / 100);
             const labelsList = []; const dataAgentes = []; const dataVolumen = [];
+            
+            // Limpiar globales antes de rellenar
+            for(let h=7; h<=20; h++) {
+                let hh = h.toString().padStart(2, '0');
+                globalErlangRequirements[`${hh}:00`] = 0;
+                globalErlangRequirements[`${hh}:30`] = 0;
+            }
 
             Object.keys(inboundDistribution30Map).sort().forEach(block => {
                 let inPct = inboundDistribution30Map[block];
@@ -732,8 +749,14 @@
                     labelsList.push(block);
                     let calls30m = (volDiario * inPct) * factorEfectivo;
                     dataVolumen.push(Math.round(calls30m));
+                    
                     let baseAgents = calculateErlangC(calls30m, 30, aht, slObj, awt);
                     dataAgentes.push(baseAgents);
+                    
+                    // NUEVO: Guardar en la variable global para el Roster
+                    if(globalErlangRequirements[block] !== undefined) {
+                        globalErlangRequirements[block] = baseAgents;
+                    }
                 }
             });
 
@@ -755,22 +778,21 @@
                     scales: { y: { beginAtZero: true, title: { display: true, text: 'Nº Agentes' } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Llamadas Entrantes (30m)' } } }
                 }
             });
+
+            // Llamar a actualizar la base del roster si ya existe
+            if(rosterAgents.length > 0) updateRosterCalculations();
         }
 
-        // --- NUEVO: Motor de Forecast ---
         function updateForecastUI() {
             const targetDow = document.getElementById('forecastDay').value; 
             const adjustPct = parseFloat(document.getElementById('forecastAdjust').value) || 0;
             const aht = parseFloat(document.getElementById('forecastAht').value) || 390;
             const shrinkage = parseFloat(document.getElementById('forecastShrinkage').value) || 30;
-            
             const slObj = parseFloat(document.getElementById('erlangSl').value) || 95;
             const awt = parseFloat(document.getElementById('erlangAwt').value) || 15;
 
             const factorCrecimiento = 1 + (adjustPct / 100);
-            
             let modelDow = globalForecastModel[targetDow] || {};
-            
             const tbody = document.getElementById('forecastTableBody');
             tbody.innerHTML = '';
             
@@ -818,11 +840,154 @@
             });
         }
 
-        // Listeners WFM
         ['erlangVol', 'erlangAht', 'erlangSl', 'erlangAwt', 'erlangAbd'].forEach(id => { document.getElementById(id).addEventListener('input', updateErlangCurve); });
-        
-        // Listeners Forecast
         ['forecastDay', 'forecastAdjust', 'forecastAht', 'forecastShrinkage'].forEach(id => { document.getElementById(id).addEventListener('input', updateForecastUI); });
+
+
+        // =========================================================================
+        // LÓGICA DEL ROSTER WFM (NUEVO)
+        // =========================================================================
+
+        const rosterBlocks = [];
+        for(let h=7; h<=20; h++) {
+            let hh = h.toString().padStart(2, '0');
+            rosterBlocks.push(`${hh}:00`);
+            rosterBlocks.push(`${hh}:30`);
+            globalErlangRequirements[`${hh}:00`] = 0;
+            globalErlangRequirements[`${hh}:30`] = 0;
+        }
+
+        let rosterAgents = [
+            { id: 1, name: "Agente 1", shifts: {} },
+            { id: 2, name: "Agente 2", shifts: {} },
+            { id: 3, name: "Agente 3", shifts: {} }
+        ];
+        let agentCounter = 3;
+        
+        let isPainting = false;
+        let paintValue = true;
+
+        // Listeners Globales para el drag-to-paint
+        document.addEventListener('mouseup', () => { isPainting = false; });
+        document.addEventListener('dragstart', (e) => { e.preventDefault(); }); // evitar ghosting de texto
+
+        function initRoster() {
+            const headerRow = document.getElementById('rosterHeaderRow');
+            rosterBlocks.forEach(b => {
+                const th = document.createElement('th');
+                th.className = "p-2 border-r min-w-[40px] text-gray-500 font-bold";
+                th.innerText = b;
+                headerRow.appendChild(th);
+            });
+            renderRosterBody();
+            updateRosterCalculations();
+        }
+
+        function renderRosterBody() {
+            const tbody = document.getElementById('rosterBody');
+            tbody.innerHTML = '';
+            
+            rosterAgents.forEach((agent, agentIndex) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                
+                // Celda nombre
+                const tdName = document.createElement('td');
+                tdName.className = "p-2 border-r sticky-col font-bold text-gray-700 text-left flex justify-between items-center";
+                
+                const nameInput = document.createElement('input');
+                nameInput.type = "text";
+                nameInput.value = agent.name;
+                nameInput.className = "w-24 outline-none bg-transparent font-bold text-gray-700";
+                nameInput.onchange = (e) => { rosterAgents[agentIndex].name = e.target.value; };
+                
+                const btnDel = document.createElement('button');
+                btnDel.innerHTML = "&times;";
+                btnDel.className = "text-red-500 hover:text-red-700 font-bold px-1 rounded";
+                btnDel.onclick = () => { rosterAgents.splice(agentIndex, 1); renderRosterBody(); updateRosterCalculations(); };
+                
+                tdName.appendChild(nameInput);
+                tdName.appendChild(btnDel);
+                tr.appendChild(tdName);
+
+                // Celdas de turno (30 min)
+                rosterBlocks.forEach(block => {
+                    const td = document.createElement('td');
+                    td.className = "border-r border-gray-200 roster-cell";
+                    if (agent.shifts[block]) td.classList.add('active');
+                    
+                    // Lógica Drag to Paint
+                    td.onmousedown = (e) => {
+                        e.preventDefault();
+                        isPainting = true;
+                        paintValue = !agent.shifts[block]; // Invertir estado actual
+                        toggleShift(agentIndex, block, paintValue, td);
+                    };
+                    td.onmouseenter = (e) => {
+                        if (isPainting) {
+                            toggleShift(agentIndex, block, paintValue, td);
+                        }
+                    };
+
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleShift(agentIndex, block, val, cellElement) {
+            rosterAgents[agentIndex].shifts[block] = val;
+            if(val) cellElement.classList.add('active');
+            else cellElement.classList.remove('active');
+            updateRosterCalculations();
+        }
+
+        document.getElementById('btnAddAgent').addEventListener('click', () => {
+            agentCounter++;
+            rosterAgents.push({ id: agentCounter, name: `Agente ${agentCounter}`, shifts: {} });
+            renderRosterBody();
+            updateRosterCalculations();
+        });
+
+        function updateRosterCalculations() {
+            // Eliminar calculos previos si existen
+            const tfoot = document.querySelector('#rosterTable tfoot');
+            const totalCells = tfoot.rows[0].querySelectorAll('.calc-cell');
+            totalCells.forEach(c => c.remove());
+            const reqCells = tfoot.rows[1].querySelectorAll('.calc-cell');
+            reqCells.forEach(c => c.remove());
+            const brechaCells = tfoot.rows[2].querySelectorAll('.calc-cell');
+            brechaCells.forEach(c => c.remove());
+
+            rosterBlocks.forEach(block => {
+                // 1. Total Programado
+                let totalProg = 0;
+                rosterAgents.forEach(a => { if(a.shifts[block]) totalProg++; });
+                
+                const tdProg = document.createElement('td');
+                tdProg.className = "calc-cell p-2 border-r font-bold";
+                tdProg.innerText = totalProg;
+                tfoot.rows[0].appendChild(tdProg);
+
+                // 2. Requerido Erlang
+                let reqErlang = globalErlangRequirements[block] || 0;
+                const tdReq = document.createElement('td');
+                tdReq.className = "calc-cell p-2 border-r font-bold bg-espex-light text-espex-dark";
+                tdReq.innerText = reqErlang;
+                tfoot.rows[1].appendChild(tdReq);
+
+                // 3. Brecha
+                let brecha = totalProg - reqErlang;
+                const tdBrecha = document.createElement('td');
+                tdBrecha.className = `calc-cell p-2 border-r font-extrabold ${brecha < 0 ? 'text-red-500 bg-red-50' : (brecha > 0 ? 'text-blue-500' : 'text-green-500')}`;
+                tdBrecha.innerText = brecha > 0 ? `+${brecha}` : brecha;
+                tfoot.rows[2].appendChild(tdBrecha);
+            });
+        }
+
+        // Inicializar Roster al cargar la página
+        window.addEventListener('DOMContentLoaded', initRoster);
 
     </script>
 </body>
