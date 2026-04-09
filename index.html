@@ -277,6 +277,13 @@
                     </div>
                 </div>
 
+                <div class="mt-6 glass-panel border-l-4 border-teal-500 bg-white">
+                    <h3 class="font-bold text-lg text-espex-dark mb-2">Visión Mensual: Promedio Diario y Volumen Total</h3>
+                    <p class="text-xs text-gray-500 mb-4">Desglose histórico del comportamiento semanal agrupado por cada mes detectado en los datos.</p>
+                    <div id="monthlyVisionContainer" class="space-y-6">
+                        </div>
+                </div>
+
             </div>
 
             <div class="mt-10 border-t-2 border-espex-light pt-6">
@@ -392,8 +399,7 @@
         let globalForecastModel = {}; 
         let globalErlangRequirements = {}; 
 
-        // Rango de horas ESTRICTO de 07:30 a 20:00 (que termina a las 20:30 si es bloque de 30m, 
-        // pero la instrucción indica rangos hasta las 20hrs, por lo tanto el último inicio es 19:30)
+        // Rango de horas ESTRICTO de 07:30 a 20:00 (07:30 a 19:30 bloques)
         const rosterBlocks = [];
         for(let h=7; h<=19; h++) {
             let hh = h.toString().padStart(2, '0');
@@ -404,10 +410,11 @@
                 rosterBlocks.push(`${hh}:30`);
             }
         }
-        // Inicializar globales
         rosterBlocks.forEach(b => globalErlangRequirements[b] = 0);
 
-        // Carga de archivo
+        // Nombres de Meses
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -423,7 +430,6 @@
             });
         });
 
-        // Configurar Filtros
         function setupFilters() {
             let dates = [];
             let colas = new Set();
@@ -499,6 +505,9 @@
             let forecastDays = { 0:{}, 1:{}, 2:{}, 3:{}, 4:{}, 5:{}, 6:{} };
             let uniqueDatesByDow = { 0:new Set(), 1:new Set(), 2:new Set(), 3:new Set(), 4:new Set(), 5:new Set(), 6:new Set() };
 
+            // NUEVO: Variables para Visión Mensual
+            let monthlyStats = {};
+
             for(let h=0; h<24; h++) {
                 let hh = h.toString().padStart(2, '0');
                 dist30Count[`${hh}:00`] = 0; dist30Count[`${hh}:30`] = 0;
@@ -545,6 +554,20 @@
                     uniqueDatesByDow[dow].add(rowDate);
                     forecastDays[dow][block30]++;
 
+                    // NUEVO: Agrupar para Visión Mensual
+                    const monthKey = rowDate.substring(0, 7); // YYYY-MM
+                    if (!monthlyStats[monthKey]) {
+                        monthlyStats[monthKey] = {
+                            total: 0,
+                            datesByDow: { 0:new Set(), 1:new Set(), 2:new Set(), 3:new Set(), 4:new Set(), 5:new Set(), 6:new Set() },
+                            callsByDow: { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 }
+                        };
+                    }
+                    monthlyStats[monthKey].total++;
+                    monthlyStats[monthKey].datesByDow[dow].add(rowDate);
+                    monthlyStats[monthKey].callsByDow[dow]++;
+
+
                     tipificaciones[tipificacion] = (tipificaciones[tipificacion] || 0) + 1;
 
                     const tEspera = timeToSeconds(row['Tiempo de Espera']);
@@ -589,7 +612,6 @@
                 avgSalientesPorHora[`${hh}:00`] = salientesPorHora[hh] / totalDays;
             }
 
-            // Población global de promedios para Forecast
             globalForecastModel = {};
             for(let d=0; d<=6; d++) {
                 let daysCount = uniqueDatesByDow[d].size || 1; 
@@ -601,12 +623,64 @@
                 }
             }
 
-            // NUEVO: Calcular Totales Semanales para la nueva tabla
             for(let d=0; d<=6; d++) {
                 let sum = 0;
                 Object.values(globalForecastModel[d]).forEach(val => sum += val);
                 document.getElementById(`wkAvg_${d}`).innerText = Math.round(sum).toLocaleString();
             }
+
+            // NUEVO: Renderizar Visión Mensual
+            const monthlyContainer = document.getElementById('monthlyVisionContainer');
+            monthlyContainer.innerHTML = '';
+
+            Object.keys(monthlyStats).sort().forEach(monthKey => {
+                const stats = monthlyStats[monthKey];
+                const [year, monthNum] = monthKey.split('-');
+                const monthName = monthNames[parseInt(monthNum, 10) - 1];
+
+                const avgs = {};
+                for(let d=0; d<=6; d++) {
+                    let daysCount = stats.datesByDow[d].size || 1;
+                    avgs[d] = Math.round(stats.callsByDow[d] / daysCount);
+                }
+
+                const html = `
+                    <div class="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                        <div class="bg-teal-50 px-4 py-2 border-b border-teal-100 flex justify-between items-center">
+                            <h4 class="font-bold text-teal-800">${monthName} ${year}</h4>
+                            <span class="text-xs font-extrabold bg-teal-200 text-teal-900 px-3 py-1 rounded-full shadow-sm">Total Mensual: ${stats.total.toLocaleString()} llamadas</span>
+                        </div>
+                        <div class="overflow-x-auto bg-white">
+                            <table class="w-full text-sm text-center border-collapse">
+                                <thead class="text-gray-500 text-xs bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th class="p-2 border-r w-1/7">Lunes</th>
+                                        <th class="p-2 border-r w-1/7">Martes</th>
+                                        <th class="p-2 border-r w-1/7">Miércoles</th>
+                                        <th class="p-2 border-r w-1/7">Jueves</th>
+                                        <th class="p-2 border-r w-1/7">Viernes</th>
+                                        <th class="p-2 border-r w-1/7">Sábado</th>
+                                        <th class="p-2 w-1/7">Domingo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="font-bold text-gray-700 text-base">
+                                        <td class="p-2 border-r text-espex-dark">${avgs[1].toLocaleString()}</td>
+                                        <td class="p-2 border-r text-espex-dark">${avgs[2].toLocaleString()}</td>
+                                        <td class="p-2 border-r text-espex-dark">${avgs[3].toLocaleString()}</td>
+                                        <td class="p-2 border-r text-espex-dark">${avgs[4].toLocaleString()}</td>
+                                        <td class="p-2 border-r text-espex-dark">${avgs[5].toLocaleString()}</td>
+                                        <td class="p-2 border-r text-gray-400">${avgs[6].toLocaleString()}</td>
+                                        <td class="p-2 text-gray-400">${avgs[0].toLocaleString()}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                monthlyContainer.innerHTML += html;
+            });
+
 
             document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
             document.getElementById('kpiSalientes').innerText = kpiOut.toLocaleString();
@@ -667,7 +741,6 @@
             const cola = document.getElementById('filterCola').value;
             const agente = document.getElementById('filterAgente').value;
 
-            // Gráfico local adaptado de 07:30 a 19:30 igual que Erlang para coherencia visual
             let localDist30Count = {};
             rosterBlocks.forEach(b => localDist30Count[b] = 0);
 
@@ -809,7 +882,6 @@
             globalErlangRequirements = {};
             rosterBlocks.forEach(b => globalErlangRequirements[b] = 0);
 
-            // Solo mapear la curva en los bloques válidos (07:30 a 19:30)
             rosterBlocks.forEach(block => {
                 let inPct = inboundDistribution30Map[block] || 0;
                 labelsList.push(block);
@@ -859,7 +931,7 @@
             tbody.innerHTML = '';
             
             const labelsList = []; const dataAgentes = []; const dataVolumen = [];
-            let totalCallsForDay = 0; // NUEVO: Acumulador
+            let totalCallsForDay = 0;
 
             Object.keys(modelDow).sort().forEach(block => {
                 let baseAvgCalls = modelDow[block] || 0;
@@ -881,11 +953,9 @@
                             <td class="px-2 py-1 text-center text-espex-dark font-extrabold bg-espex-light rounded">${programmedStaff}</td>
                         </tr>`;
                 }
-                // Acumulamos las llamadas para el total general
                 totalCallsForDay += projectedCalls;
             });
 
-            // NUEVO: Mostrar total diario
             document.getElementById('forecastTotalDay').innerText = `Promedio Total Esperado: ${Math.round(totalCallsForDay).toLocaleString()} llamadas`;
 
             const canvasId = 'chartForecast';
@@ -1087,7 +1157,6 @@
                 tfoot.rows[2].appendChild(tdBrecha);
             });
 
-            // NUEVO: Actualizar la grilla de recomendación bajo el roster
             const recGrid = document.getElementById('rosterRecommendationGrid');
             recGrid.innerHTML = '';
             rosterBlocks.forEach(block => {
