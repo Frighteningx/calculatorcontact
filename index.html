@@ -54,7 +54,11 @@
     <div class="max-w-7xl mx-auto p-6 space-y-6">
         
         <div class="glass-panel border-t-4 border-espex">
-            <h2 class="text-xl font-bold mb-4 text-espex-dark border-b pb-2">Forecast y proyecciones contact HDLF</h2>
+            <div class="flex items-center mb-4 border-b pb-2">
+                <h2 class="text-xl font-bold text-espex-dark">Panel de Control y Filtros</h2>
+                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold ml-3" title="Los feriados de Chile han sido eliminados de la muestra para no sesgar promedios ni SLA.">Feriados Chilenos Excluidos</span>
+            </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <div class="col-span-1 md:col-span-2">
                     <label class="block text-xs font-bold text-gray-600 mb-1">Cargar CSV Histórico</label>
@@ -392,6 +396,24 @@
     </div>
 
     <script>
+        // === MOTOR DE FERIADOS CHILENOS ===
+        // Feriados fijos (MM-DD)
+        const fixedHolidays = ['01-01', '05-01', '05-21', '07-16', '08-15', '09-18', '09-19', '10-31', '11-01', '12-08', '12-25'];
+        // Feriados móviles / calculados para 2025, 2026, 2027
+        const movableHolidays = [
+            '2025-04-18', '2025-04-19', '2025-06-20', '2025-10-13',
+            '2026-04-03', '2026-04-04', '2026-06-29', '2026-10-12',
+            '2027-03-26', '2027-03-27', '2027-06-28', '2027-10-11'
+        ];
+
+        function isChileanHoliday(dateStr) {
+            if(!dateStr || dateStr.length !== 10) return false;
+            const mmdd = dateStr.substring(5);
+            if(fixedHolidays.includes(mmdd)) return true;
+            if(movableHolidays.includes(dateStr)) return true;
+            return false;
+        }
+
         // Variables Globales
         let charts = {};
         let rawData = []; 
@@ -399,7 +421,7 @@
         let globalForecastModel = {}; 
         let globalErlangRequirements = {}; 
 
-        // Rango de horas ESTRICTO de 07:30 a 20:00 (07:30 a 19:30 bloques)
+        // Rango de horas ESTRICTO de 07:30 a 20:00
         const rosterBlocks = [];
         for(let h=7; h<=19; h++) {
             let hh = h.toString().padStart(2, '0');
@@ -412,7 +434,6 @@
         }
         rosterBlocks.forEach(b => globalErlangRequirements[b] = 0);
 
-        // Nombres de Meses
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
@@ -438,7 +459,9 @@
             rawData.forEach(row => {
                 if (row['Fecha']) {
                     const d = row['Fecha'].split(' ')[0];
-                    if (d && d.length === 10) dates.push(d);
+                    if (d && d.length === 10 && !isChileanHoliday(d)) {
+                        dates.push(d);
+                    }
                 }
                 if (row['Cola']) colas.add(row['Cola'].trim());
                 if (row['Agente']) agentes.add(row['Agente'].trim());
@@ -504,8 +527,6 @@
 
             let forecastDays = { 0:{}, 1:{}, 2:{}, 3:{}, 4:{}, 5:{}, 6:{} };
             let uniqueDatesByDow = { 0:new Set(), 1:new Set(), 2:new Set(), 3:new Set(), 4:new Set(), 5:new Set(), 6:new Set() };
-
-            // NUEVO: Variables para Visión Mensual
             let monthlyStats = {};
 
             for(let h=0; h<24; h++) {
@@ -518,6 +539,10 @@
             rawData.forEach(row => {
                 if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
+                
+                // === FILTRO DE FERIADOS ===
+                if (isChileanHoliday(rowDate)) return;
+
                 const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
                 const rowCola = (row['Cola'] || '').trim();
                 const rowAgente = (row['Agente'] || '').trim();
@@ -554,8 +579,7 @@
                     uniqueDatesByDow[dow].add(rowDate);
                     forecastDays[dow][block30]++;
 
-                    // NUEVO: Agrupar para Visión Mensual
-                    const monthKey = rowDate.substring(0, 7); // YYYY-MM
+                    const monthKey = rowDate.substring(0, 7);
                     if (!monthlyStats[monthKey]) {
                         monthlyStats[monthKey] = {
                             total: 0,
@@ -566,7 +590,6 @@
                     monthlyStats[monthKey].total++;
                     monthlyStats[monthKey].datesByDow[dow].add(rowDate);
                     monthlyStats[monthKey].callsByDow[dow]++;
-
 
                     tipificaciones[tipificacion] = (tipificaciones[tipificacion] || 0) + 1;
 
@@ -629,7 +652,6 @@
                 document.getElementById(`wkAvg_${d}`).innerText = Math.round(sum).toLocaleString();
             }
 
-            // NUEVO: Renderizar Visión Mensual
             const monthlyContainer = document.getElementById('monthlyVisionContainer');
             monthlyContainer.innerHTML = '';
 
@@ -680,7 +702,6 @@
                 `;
                 monthlyContainer.innerHTML += html;
             });
-
 
             document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
             document.getElementById('kpiSalientes').innerText = kpiOut.toLocaleString();
@@ -747,6 +768,10 @@
             rawData.forEach(row => {
                 if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
+                
+                // === FILTRO DE FERIADOS ===
+                if (isChileanHoliday(rowDate)) return;
+
                 const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
                 const rowCola = (row['Cola'] || '').trim();
                 const rowAgente = (row['Agente'] || '').trim();
@@ -936,9 +961,9 @@
             Object.keys(modelDow).sort().forEach(block => {
                 let baseAvgCalls = modelDow[block] || 0;
                 let projectedCalls = baseAvgCalls * factorCrecimiento;
-                let h = parseInt(block.split(':')[0]);
-
-                if(projectedCalls > 0.5 || (h >= 8 && h <= 20)) {
+                
+                // Aplicar restricción visual del gráfico a 07:30 - 20:00
+                if(rosterBlocks.includes(block)) {
                     labelsList.push(block);
                     dataVolumen.push(Math.round(projectedCalls));
 
