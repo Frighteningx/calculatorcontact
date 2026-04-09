@@ -244,15 +244,10 @@
             </div>
 
             <div class="mt-10 border-t-2 border-espex-light pt-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-espex-dark flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                        Planificación WFM (Erlang C + Roster Interactivo)
-                    </h2>
-                    <button id="btnAddAgent" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-bold text-sm shadow transition">
-                        + Agregar Agente al Pool
-                    </button>
-                </div>
+                <h2 class="text-2xl font-bold text-espex-dark flex items-center mb-4">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Planificación WFM (Erlang C + Roster Interactivo)
+                </h2>
                 
                 <div class="glass-panel border-l-4 border-espex bg-white p-0 overflow-hidden shadow-lg">
                     
@@ -291,10 +286,31 @@
                         </div>
                     </div>
 
-                    <div class="p-6 bg-gray-50 flex justify-between items-center border-b border-gray-200">
-                        <h3 class="font-bold text-xl text-espex-dark">Paso 2: Asignación de Turnos (Roster)</h3>
-                        <p class="text-sm text-gray-600 text-right">
-                            <strong>Instrucciones:</strong> Haz clic y arrastra sobre las celdas para <span class="text-green-600 font-bold">pintar</span> o borrar los horarios. La meta se alimenta de Erlang.
+                    <div class="p-6 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 gap-4">
+                        <div>
+                            <h3 class="font-bold text-xl text-espex-dark mb-3">Paso 2: Asignación de Turnos (Roster)</h3>
+                            
+                            <div class="flex flex-wrap gap-3 items-end">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600">Nº Agentes</label>
+                                    <input type="number" id="autoNumAgents" class="mt-1 w-20 p-2 border rounded-md border-gray-300 focus:ring-indigo-500" value="10">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600">Horas x Turno</label>
+                                    <input type="number" id="autoShiftHours" class="mt-1 w-20 p-2 border rounded-md border-gray-300 focus:ring-indigo-500" value="6" step="0.5">
+                                </div>
+                                <button id="btnAutoRoster" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold text-sm shadow transition">
+                                    ⚡ Auto-Distribuir
+                                </button>
+                                <div class="h-8 border-l-2 border-gray-300 mx-1"></div>
+                                <button id="btnAddAgent" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-bold text-sm shadow transition">
+                                    + Vacío Manual
+                                </button>
+                            </div>
+                            
+                        </div>
+                        <p class="text-sm text-gray-600 md:text-right max-w-sm bg-white p-3 rounded shadow-sm border border-gray-200">
+                            <strong>Instrucciones:</strong> Usa <em>Auto-Distribuir</em> para calzar al personal en los peaks. Luego haz clic y arrastra sobre las celdas para hacer ajustes manuales (ej: agregar colaciones).
                         </p>
                     </div>
 
@@ -841,7 +857,7 @@
 
 
         // =========================================================================
-        // LÓGICA DEL ROSTER WFM
+        // LÓGICA DEL ROSTER WFM CON AUTO-SCHEDULE (Greedy Algorithm)
         // =========================================================================
 
         const rosterBlocks = [];
@@ -853,13 +869,8 @@
             globalErlangRequirements[`${hh}:30`] = 0;
         }
 
-        let rosterAgents = [
-            { id: 1, name: "Agente 1", shifts: {} },
-            { id: 2, name: "Agente 2", shifts: {} },
-            { id: 3, name: "Agente 3", shifts: {} },
-            { id: 4, name: "Agente 4", shifts: {} }
-        ];
-        let agentCounter = 4;
+        let rosterAgents = [];
+        let agentCounter = 0;
         
         let isPainting = false;
         let paintValue = true;
@@ -875,6 +886,8 @@
                 th.innerText = b;
                 headerRow.appendChild(th);
             });
+            
+            // Iniciar vacío hasta que el usuario decida poblar
             renderRosterBody();
             updateRosterCalculations();
         }
@@ -936,9 +949,72 @@
             updateRosterCalculations();
         }
 
+        // AGREGAR AGENTE MANUALMENTE
         document.getElementById('btnAddAgent').addEventListener('click', () => {
             agentCounter++;
             rosterAgents.push({ id: agentCounter, name: `Agente ${agentCounter}`, shifts: {} });
+            renderRosterBody();
+            updateRosterCalculations();
+        });
+
+        // NUEVO: BOTÓN AUTO-DISTRIBUIR TURNOS
+        document.getElementById('btnAutoRoster').addEventListener('click', () => {
+            const numAgents = parseInt(document.getElementById('autoNumAgents').value) || 0;
+            const shiftHours = parseFloat(document.getElementById('autoShiftHours').value) || 0;
+            
+            if(numAgents <= 0 || shiftHours <= 0) return alert("Ingresa un número válido de agentes y horas (ej: 10 agentes de 6 hrs).");
+            
+            let shiftBlocks = Math.floor(shiftHours * 2);
+            if(shiftBlocks > rosterBlocks.length) shiftBlocks = rosterBlocks.length; // Evitar que el turno se salga del día
+            
+            // 1. Limpiar roster actual
+            rosterAgents = [];
+            agentCounter = 0;
+            
+            // 2. Control temporal de la programación para iterar
+            let currentProg = {};
+            rosterBlocks.forEach(b => currentProg[b] = 0);
+            
+            // 3. Algoritmo Greedy: Asignar al agente en el bloque que cubra más brecha
+            for(let i = 0; i < numAgents; i++) {
+                agentCounter++;
+                let newAgent = { id: agentCounter, name: `Agente ${agentCounter}`, shifts: {} };
+                
+                let bestStartIdx = 0;
+                let maxScore = -999999;
+                
+                // Buscar la ventana de tiempo (shiftBlocks) con mayor necesidad
+                for(let s = 0; s <= rosterBlocks.length - shiftBlocks; s++) {
+                    let score = 0;
+                    for(let j = 0; j < shiftBlocks; j++) {
+                        let block = rosterBlocks[s + j];
+                        let req = globalErlangRequirements[block] || 0;
+                        let prog = currentProg[block] || 0;
+                        
+                        if(req > prog) {
+                            score += (req - prog); // Cubrimos necesidad real
+                        } else {
+                            score -= 0.5; // Penalizamos levemente sobre-staffear un horario innecesario
+                        }
+                    }
+                    
+                    if(score > maxScore) {
+                        maxScore = score;
+                        bestStartIdx = s;
+                    }
+                }
+                
+                // 4. Asignar las horas al agente en la mejor ventana encontrada
+                for(let j = 0; j < shiftBlocks; j++) {
+                    let block = rosterBlocks[bestStartIdx + j];
+                    newAgent.shifts[block] = true;
+                    currentProg[block]++;
+                }
+                
+                rosterAgents.push(newAgent);
+            }
+            
+            // 5. Renderizar los resultados
             renderRosterBody();
             updateRosterCalculations();
         });
