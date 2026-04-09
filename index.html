@@ -32,7 +32,6 @@
         ::-webkit-scrollbar-thumb:hover { background: #166534; }
         .table-row-hover:hover { background-color: #dcfce7; }
         
-        /* Estilos específicos para el Roster Interactivo */
         .roster-cell { cursor: cell; user-select: none; transition: background-color 0.1s; }
         .roster-cell.active { background-color: #22c55e; border-color: #166534; }
         .roster-cell:hover { opacity: 0.8; }
@@ -227,20 +226,57 @@
                         <div class="md:col-span-2 bg-white p-4 rounded-lg shadow-inner border border-gray-100 h-80 relative">
                             <canvas id="chartForecast"></canvas>
                         </div>
-                        <div class="bg-white rounded-lg shadow-inner border border-gray-100 overflow-y-auto h-80">
-                            <table class="w-full text-xs text-left text-gray-600">
-                                <thead class="text-white uppercase bg-indigo-600 sticky top-0">
-                                    <tr>
-                                        <th class="px-2 py-2">Hora</th>
-                                        <th class="px-2 py-2 text-center">Llamadas</th>
-                                        <th class="px-2 py-2 text-center" title="Personas a contratar/programar incluyendo shrinkage">Turnos Req.</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="forecastTableBody"></tbody>
-                            </table>
+                        <div class="flex flex-col">
+                            <div class="bg-white rounded-lg shadow-inner border border-gray-100 overflow-y-auto flex-grow h-64">
+                                <table class="w-full text-xs text-left text-gray-600">
+                                    <thead class="text-white uppercase bg-indigo-600 sticky top-0">
+                                        <tr>
+                                            <th class="px-2 py-2">Hora</th>
+                                            <th class="px-2 py-2 text-center">Llamadas</th>
+                                            <th class="px-2 py-2 text-center" title="Personas a contratar/programar">Turnos Req.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="forecastTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="forecastTotalDay" class="mt-3 p-3 bg-indigo-100 border border-indigo-300 rounded-lg text-center font-bold text-indigo-800 shadow-sm text-lg">
+                                Promedio Total Esperado: 0 llamadas
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="mt-6 glass-panel border-l-4 border-purple-500 bg-white">
+                    <h3 class="font-bold text-lg text-espex-dark mb-2">Visión Semanal: Promedio Acumulado de Llamadas por Día</h3>
+                    <p class="text-xs text-gray-500 mb-4">Muestra la carga histórica promedio de cada día de la semana para dimensionar a nivel global.</p>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="w-full text-sm text-center border-collapse">
+                            <thead class="bg-purple-100 text-purple-800">
+                                <tr>
+                                    <th class="p-3 border">Lunes</th>
+                                    <th class="p-3 border">Martes</th>
+                                    <th class="p-3 border">Miércoles</th>
+                                    <th class="p-3 border">Jueves</th>
+                                    <th class="p-3 border">Viernes</th>
+                                    <th class="p-3 border">Sábado</th>
+                                    <th class="p-3 border">Domingo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="font-bold text-gray-700 text-lg bg-white">
+                                    <td class="p-3 border text-espex-dark" id="wkAvg_1">0</td>
+                                    <td class="p-3 border text-espex-dark" id="wkAvg_2">0</td>
+                                    <td class="p-3 border text-espex-dark" id="wkAvg_3">0</td>
+                                    <td class="p-3 border text-espex-dark" id="wkAvg_4">0</td>
+                                    <td class="p-3 border text-espex-dark" id="wkAvg_5">0</td>
+                                    <td class="p-3 border text-gray-400" id="wkAvg_6">0</td>
+                                    <td class="p-3 border text-gray-400" id="wkAvg_0">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
             <div class="mt-10 border-t-2 border-espex-light pt-6">
@@ -254,9 +290,9 @@
                     <div class="p-6 bg-gradient-to-br from-white to-espex-table border-b border-gray-200">
                         <div class="flex justify-between items-center mb-2">
                             <h3 class="font-bold text-xl text-espex-dark">Paso 1: Simulador Erlang C</h3>
-                            <span class="text-xs bg-espex text-white px-2 py-1 rounded-full font-bold ml-2">ESTRICTO ENTRANTES</span>
+                            <span class="text-xs bg-espex text-white px-2 py-1 rounded-full font-bold ml-2">ESTRICTO ENTRANTES (07:30 a 20:00)</span>
                         </div>
-                        <p class="text-sm text-gray-700 mb-4">Esta calculadora extrae la distribución <strong>exclusivamente de las llamadas entrantes</strong>. Aplica tu pronóstico diario (Forecast) y calcula los agentes concurrentes necesarios por media hora.</p>
+                        <p class="text-sm text-gray-700 mb-4">Aplica tu pronóstico diario (Forecast) para calcular los agentes concurrentes necesarios en la franja horaria requerida (07:30 a 20:00 hrs).</p>
                         
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-end bg-white p-4 rounded-lg shadow-sm border border-green-200 mb-6">
                             <div>
@@ -310,7 +346,7 @@
                             
                         </div>
                         <p class="text-sm text-gray-600 md:text-right max-w-sm bg-white p-3 rounded shadow-sm border border-gray-200">
-                            <strong>Instrucciones:</strong> Usa <em>Auto-Distribuir</em> para calzar al personal en los peaks. Luego haz clic y arrastra sobre las celdas para hacer ajustes manuales (ej: agregar colaciones).
+                            <strong>Instrucciones:</strong> Usa <em>Auto-Distribuir</em> para calzar al personal en los peaks. Luego haz clic y arrastra sobre las celdas para hacer ajustes manuales.
                         </p>
                     </div>
 
@@ -319,16 +355,15 @@
                             <thead class="bg-gray-100 border-b-2 border-gray-200">
                                 <tr id="rosterHeaderRow">
                                     <th class="p-2 border-r sticky-head-col sticky-col w-48 text-left text-gray-700">Nombre Agente</th>
-                                    </tr>
+                                </tr>
                             </thead>
-                            <tbody id="rosterBody">
-                                </tbody>
+                            <tbody id="rosterBody"></tbody>
                             <tfoot class="font-bold bg-gray-50 border-t-2 border-gray-300">
                                 <tr class="text-blue-700">
                                     <td class="p-2 border-r sticky-col text-right">Total Programado:</td>
                                 </tr>
                                 <tr class="text-espex-dark bg-espex-light">
-                                    <td class="p-2 border-r sticky-col text-right" title="Viene de la calculadora Erlang superior">Requerido Erlang:</td>
+                                    <td class="p-2 border-r sticky-col text-right">Requerido Erlang:</td>
                                 </tr>
                                 <tr id="rosterBrechaRow" class="text-gray-800">
                                     <td class="p-2 border-r sticky-col text-right">Brecha (Faltan/Sobran):</td>
@@ -336,6 +371,13 @@
                             </tfoot>
                         </table>
                     </div>
+                    
+                    <div class="p-6 bg-white border-t border-gray-200">
+                        <h4 class="font-bold text-lg text-espex-dark mb-3">Recomendación Directa (Agentes requeridos por bloque)</h4>
+                        <div id="rosterRecommendationGrid" class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-9 gap-3">
+                            </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -343,12 +385,27 @@
     </div>
 
     <script>
-        // Variables Globales Existentes
+        // Variables Globales
         let charts = {};
         let rawData = []; 
         let inboundDistribution30Map = {}; 
         let globalForecastModel = {}; 
         let globalErlangRequirements = {}; 
+
+        // Rango de horas ESTRICTO de 07:30 a 20:00 (que termina a las 20:30 si es bloque de 30m, 
+        // pero la instrucción indica rangos hasta las 20hrs, por lo tanto el último inicio es 19:30)
+        const rosterBlocks = [];
+        for(let h=7; h<=19; h++) {
+            let hh = h.toString().padStart(2, '0');
+            if(h===7) {
+                rosterBlocks.push(`07:30`);
+            } else {
+                rosterBlocks.push(`${hh}:00`);
+                rosterBlocks.push(`${hh}:30`);
+            }
+        }
+        // Inicializar globales
+        rosterBlocks.forEach(b => globalErlangRequirements[b] = 0);
 
         // Carga de archivo
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
@@ -385,7 +442,6 @@
                 dates.sort();
                 document.getElementById('dateStart').value = dates[0];
                 document.getElementById('dateEnd').value = dates[dates.length - 1];
-                
                 document.getElementById('localChartStart').value = dates[0];
                 document.getElementById('localChartEnd').value = dates[dates.length - 1];
             }
@@ -533,6 +589,7 @@
                 avgSalientesPorHora[`${hh}:00`] = salientesPorHora[hh] / totalDays;
             }
 
+            // Población global de promedios para Forecast
             globalForecastModel = {};
             for(let d=0; d<=6; d++) {
                 let daysCount = uniqueDatesByDow[d].size || 1; 
@@ -542,6 +599,13 @@
                     globalForecastModel[d][`${hh}:00`] = forecastDays[d][`${hh}:00`] / daysCount;
                     globalForecastModel[d][`${hh}:30`] = forecastDays[d][`${hh}:30`] / daysCount;
                 }
+            }
+
+            // NUEVO: Calcular Totales Semanales para la nueva tabla
+            for(let d=0; d<=6; d++) {
+                let sum = 0;
+                Object.values(globalForecastModel[d]).forEach(val => sum += val);
+                document.getElementById(`wkAvg_${d}`).innerText = Math.round(sum).toLocaleString();
             }
 
             document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
@@ -603,12 +667,9 @@
             const cola = document.getElementById('filterCola').value;
             const agente = document.getElementById('filterAgente').value;
 
+            // Gráfico local adaptado de 07:30 a 19:30 igual que Erlang para coherencia visual
             let localDist30Count = {};
-            for(let h=7; h<=20; h++) {
-                let hh = h.toString().padStart(2, '0');
-                localDist30Count[`${hh}:00`] = 0;
-                localDist30Count[`${hh}:30`] = 0;
-            }
+            rosterBlocks.forEach(b => localDist30Count[b] = 0);
 
             rawData.forEach(row => {
                 if (!row['Fecha']) return;
@@ -627,24 +688,20 @@
                     const timeStr = row['Fecha'].split(' ')[1] || '00:00:00';
                     const hourPart = timeStr.split(':')[0]; 
                     const minPart = parseInt(timeStr.split(':')[1]);
+                    const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
                     
-                    const hNum = parseInt(hourPart);
-                    if (hNum >= 7 && hNum <= 20) {
-                        const block30 = minPart < 30 ? `${hourPart}:00` : `${hourPart}:30`;
-                        if (localDist30Count[block30] !== undefined) {
-                            localDist30Count[block30]++;
-                        }
+                    if (localDist30Count[block30] !== undefined) {
+                        localDist30Count[block30]++;
                     }
                 }
             });
 
             const distLabels = [];
             const distData = [];
-            for(let h=7; h<=20; h++) {
-                let hh = h.toString().padStart(2, '0');
-                distLabels.push(`${hh}:00`); distData.push(localDist30Count[`${hh}:00`]);
-                distLabels.push(`${hh}:30`); distData.push(localDist30Count[`${hh}:30`]);
-            }
+            rosterBlocks.forEach(b => {
+                distLabels.push(b);
+                distData.push(localDist30Count[b]);
+            });
 
             renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
         }
@@ -749,28 +806,21 @@
             const factorEfectivo = 1 - (abd / 100);
             const labelsList = []; const dataAgentes = []; const dataVolumen = [];
             
-            for(let h=7; h<=20; h++) {
-                let hh = h.toString().padStart(2, '0');
-                globalErlangRequirements[`${hh}:00`] = 0;
-                globalErlangRequirements[`${hh}:30`] = 0;
-            }
+            globalErlangRequirements = {};
+            rosterBlocks.forEach(b => globalErlangRequirements[b] = 0);
 
-            Object.keys(inboundDistribution30Map).sort().forEach(block => {
-                let inPct = inboundDistribution30Map[block];
-                let h = parseInt(block.split(':')[0]);
+            // Solo mapear la curva en los bloques válidos (07:30 a 19:30)
+            rosterBlocks.forEach(block => {
+                let inPct = inboundDistribution30Map[block] || 0;
+                labelsList.push(block);
                 
-                if(inPct > 0 || (h >= 7 && h <= 20)) {
-                    labelsList.push(block);
-                    let calls30m = (volDiario * inPct) * factorEfectivo;
-                    dataVolumen.push(Math.round(calls30m));
-                    
-                    let baseAgents = calculateErlangC(calls30m, 30, aht, slObj, awt);
-                    dataAgentes.push(baseAgents);
-                    
-                    if(globalErlangRequirements[block] !== undefined) {
-                        globalErlangRequirements[block] = baseAgents;
-                    }
-                }
+                let calls30m = (volDiario * inPct) * factorEfectivo;
+                dataVolumen.push(Math.round(calls30m));
+                
+                let baseAgents = calculateErlangC(calls30m, 30, aht, slObj, awt);
+                dataAgentes.push(baseAgents);
+                
+                globalErlangRequirements[block] = baseAgents;
             });
 
             const canvasId = 'chartErlangCurve';
@@ -809,6 +859,7 @@
             tbody.innerHTML = '';
             
             const labelsList = []; const dataAgentes = []; const dataVolumen = [];
+            let totalCallsForDay = 0; // NUEVO: Acumulador
 
             Object.keys(modelDow).sort().forEach(block => {
                 let baseAvgCalls = modelDow[block] || 0;
@@ -830,7 +881,12 @@
                             <td class="px-2 py-1 text-center text-espex-dark font-extrabold bg-espex-light rounded">${programmedStaff}</td>
                         </tr>`;
                 }
+                // Acumulamos las llamadas para el total general
+                totalCallsForDay += projectedCalls;
             });
+
+            // NUEVO: Mostrar total diario
+            document.getElementById('forecastTotalDay').innerText = `Promedio Total Esperado: ${Math.round(totalCallsForDay).toLocaleString()} llamadas`;
 
             const canvasId = 'chartForecast';
             const ctx = document.getElementById(canvasId).getContext('2d');
@@ -860,18 +916,8 @@
         // LÓGICA DEL ROSTER WFM CON AUTO-SCHEDULE (Greedy Algorithm)
         // =========================================================================
 
-        const rosterBlocks = [];
-        for(let h=7; h<=20; h++) {
-            let hh = h.toString().padStart(2, '0');
-            rosterBlocks.push(`${hh}:00`);
-            rosterBlocks.push(`${hh}:30`);
-            globalErlangRequirements[`${hh}:00`] = 0;
-            globalErlangRequirements[`${hh}:30`] = 0;
-        }
-
         let rosterAgents = [];
         let agentCounter = 0;
-        
         let isPainting = false;
         let paintValue = true;
 
@@ -887,7 +933,6 @@
                 headerRow.appendChild(th);
             });
             
-            // Iniciar vacío hasta que el usuario decida poblar
             renderRosterBody();
             updateRosterCalculations();
         }
@@ -949,7 +994,6 @@
             updateRosterCalculations();
         }
 
-        // AGREGAR AGENTE MANUALMENTE
         document.getElementById('btnAddAgent').addEventListener('click', () => {
             agentCounter++;
             rosterAgents.push({ id: agentCounter, name: `Agente ${agentCounter}`, shifts: {} });
@@ -957,7 +1001,6 @@
             updateRosterCalculations();
         });
 
-        // NUEVO: BOTÓN AUTO-DISTRIBUIR TURNOS
         document.getElementById('btnAutoRoster').addEventListener('click', () => {
             const numAgents = parseInt(document.getElementById('autoNumAgents').value) || 0;
             const shiftHours = parseFloat(document.getElementById('autoShiftHours').value) || 0;
@@ -965,17 +1008,14 @@
             if(numAgents <= 0 || shiftHours <= 0) return alert("Ingresa un número válido de agentes y horas (ej: 10 agentes de 6 hrs).");
             
             let shiftBlocks = Math.floor(shiftHours * 2);
-            if(shiftBlocks > rosterBlocks.length) shiftBlocks = rosterBlocks.length; // Evitar que el turno se salga del día
+            if(shiftBlocks > rosterBlocks.length) shiftBlocks = rosterBlocks.length; 
             
-            // 1. Limpiar roster actual
             rosterAgents = [];
             agentCounter = 0;
             
-            // 2. Control temporal de la programación para iterar
             let currentProg = {};
             rosterBlocks.forEach(b => currentProg[b] = 0);
             
-            // 3. Algoritmo Greedy: Asignar al agente en el bloque que cubra más brecha
             for(let i = 0; i < numAgents; i++) {
                 agentCounter++;
                 let newAgent = { id: agentCounter, name: `Agente ${agentCounter}`, shifts: {} };
@@ -983,7 +1023,6 @@
                 let bestStartIdx = 0;
                 let maxScore = -999999;
                 
-                // Buscar la ventana de tiempo (shiftBlocks) con mayor necesidad
                 for(let s = 0; s <= rosterBlocks.length - shiftBlocks; s++) {
                     let score = 0;
                     for(let j = 0; j < shiftBlocks; j++) {
@@ -992,9 +1031,9 @@
                         let prog = currentProg[block] || 0;
                         
                         if(req > prog) {
-                            score += (req - prog); // Cubrimos necesidad real
+                            score += (req - prog); 
                         } else {
-                            score -= 0.5; // Penalizamos levemente sobre-staffear un horario innecesario
+                            score -= 0.5; 
                         }
                     }
                     
@@ -1004,7 +1043,6 @@
                     }
                 }
                 
-                // 4. Asignar las horas al agente en la mejor ventana encontrada
                 for(let j = 0; j < shiftBlocks; j++) {
                     let block = rosterBlocks[bestStartIdx + j];
                     newAgent.shifts[block] = true;
@@ -1014,7 +1052,6 @@
                 rosterAgents.push(newAgent);
             }
             
-            // 5. Renderizar los resultados
             renderRosterBody();
             updateRosterCalculations();
         });
@@ -1048,6 +1085,20 @@
                 tdBrecha.className = `calc-cell p-2 border-r font-extrabold ${brecha < 0 ? 'text-red-500 bg-red-50' : (brecha > 0 ? 'text-blue-500' : 'text-green-500')}`;
                 tdBrecha.innerText = brecha > 0 ? `+${brecha}` : brecha;
                 tfoot.rows[2].appendChild(tdBrecha);
+            });
+
+            // NUEVO: Actualizar la grilla de recomendación bajo el roster
+            const recGrid = document.getElementById('rosterRecommendationGrid');
+            recGrid.innerHTML = '';
+            rosterBlocks.forEach(block => {
+                let reqErlang = globalErlangRequirements[block] || 0;
+                recGrid.innerHTML += `
+                    <div class="bg-gray-50 border border-espex-light p-2 rounded text-center shadow-sm">
+                        <div class="text-xs text-gray-500 font-bold">${block}</div>
+                        <div class="text-lg text-espex-dark font-extrabold">${reqErlang}</div>
+                        <div class="text-[10px] text-gray-400">Agentes</div>
+                    </div>
+                `;
             });
         }
 
