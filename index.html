@@ -333,32 +333,54 @@
                         </div>
                     </div>
 
-                    <div class="p-6 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 gap-4">
-                        <div>
-                            <h3 class="font-bold text-xl text-espex-dark mb-3">Paso 2: Asignación de Turnos (Roster)</h3>
+                    <div class="p-6 bg-gray-50 border-b border-gray-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-xl text-espex-dark">Paso 2: Asignación de Turnos (Roster)</h3>
+                            <button id="btnExportExcel" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold text-sm shadow transition flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Descargar Excel Interactivo
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-white p-4 rounded border border-gray-200 shadow-sm">
                             
-                            <div class="flex flex-wrap gap-3 items-end">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-600">Nº Agentes</label>
-                                    <input type="number" id="autoNumAgents" class="mt-1 w-20 p-2 border rounded-md border-gray-300 focus:ring-indigo-500" value="10">
+                            <div class="md:col-span-3">
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide">Grupo 1 (Ej: Full-Time)</label>
+                                <div class="flex space-x-2 mt-1">
+                                    <div class="w-1/2">
+                                        <label class="block text-[9px] text-gray-400">Nº Agentes</label>
+                                        <input type="number" id="autoNumAgents1" class="w-full p-2 border rounded-md border-gray-300 focus:ring-indigo-500 text-sm font-bold" value="10">
+                                    </div>
+                                    <div class="w-1/2">
+                                        <label class="block text-[9px] text-gray-400">Hrs x Turno</label>
+                                        <input type="number" id="autoShiftHours1" class="w-full p-2 border rounded-md border-gray-300 focus:ring-indigo-500 text-sm font-bold" value="9" step="0.5">
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-600">Horas x Turno</label>
-                                    <input type="number" id="autoShiftHours" class="mt-1 w-20 p-2 border rounded-md border-gray-300 focus:ring-indigo-500" value="6" step="0.5">
+                            </div>
+
+                            <div class="md:col-span-3">
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide">Grupo 2 (Ej: Part-Time)</label>
+                                <div class="flex space-x-2 mt-1">
+                                    <div class="w-1/2">
+                                        <label class="block text-[9px] text-gray-400">Nº Agentes</label>
+                                        <input type="number" id="autoNumAgents2" class="w-full p-2 border rounded-md border-gray-300 focus:ring-indigo-500 text-sm font-bold" value="20">
+                                    </div>
+                                    <div class="w-1/2">
+                                        <label class="block text-[9px] text-gray-400">Hrs x Turno</label>
+                                        <input type="number" id="autoShiftHours2" class="w-full p-2 border rounded-md border-gray-300 focus:ring-indigo-500 text-sm font-bold" value="4" step="0.5">
+                                    </div>
                                 </div>
-                                <button id="btnAutoRoster" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold text-sm shadow transition">
-                                    ⚡ Auto-Distribuir
+                            </div>
+
+                            <div class="md:col-span-6 flex space-x-3 mb-1">
+                                <button id="btnAutoRoster" class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 font-bold text-sm shadow transition">
+                                    ⚡ Distribuir en Orden
                                 </button>
-                                <div class="h-8 border-l-2 border-gray-300 mx-1"></div>
-                                <button id="btnAddAgent" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-bold text-sm shadow transition">
+                                <button id="btnAddAgent" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 font-bold text-sm shadow transition">
                                     + Vacío Manual
                                 </button>
                             </div>
-                            
                         </div>
-                        <p class="text-sm text-gray-600 md:text-right max-w-sm bg-white p-3 rounded shadow-sm border border-gray-200">
-                            <strong>Instrucciones:</strong> Usa <em>Auto-Distribuir</em> para calzar al personal en los peaks. Luego haz clic y arrastra sobre las celdas para hacer ajustes manuales.
-                        </p>
                     </div>
 
                     <div class="overflow-x-auto bg-white pb-2">
@@ -384,7 +406,8 @@
                     </div>
                     
                     <div class="p-6 bg-white border-t border-gray-200">
-                        <h4 class="font-bold text-lg text-espex-dark mb-3">Recomendación Directa (Agentes requeridos por bloque)</h4>
+                        <h4 class="font-bold text-lg text-espex-dark mb-1">Recomendación Directa de Cobertura</h4>
+                        <p class="text-xs text-gray-500 mb-4">Cantidad de agentes reales <strong>(Disponibles / Programados)</strong> que tienes activos en cada franja horaria según tu malla actual.</p>
                         <div id="rosterRecommendationGrid" class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-9 gap-3">
                             </div>
                     </div>
@@ -397,9 +420,7 @@
 
     <script>
         // === MOTOR DE FERIADOS CHILENOS ===
-        // Feriados fijos (MM-DD)
         const fixedHolidays = ['01-01', '05-01', '05-21', '07-16', '08-15', '09-18', '09-19', '10-31', '11-01', '12-08', '12-25'];
-        // Feriados móviles / calculados para 2025, 2026, 2027
         const movableHolidays = [
             '2025-04-18', '2025-04-19', '2025-06-20', '2025-10-13',
             '2026-04-03', '2026-04-04', '2026-06-29', '2026-10-12',
@@ -421,7 +442,7 @@
         let globalForecastModel = {}; 
         let globalErlangRequirements = {}; 
 
-        // Rango de horas ESTRICTO de 07:30 a 20:00
+        // Rango de horas ESTRICTO de 07:30 a 20:00 (07:30 a 19:30 bloques)
         const rosterBlocks = [];
         for(let h=7; h<=19; h++) {
             let hh = h.toString().padStart(2, '0');
@@ -540,7 +561,6 @@
                 if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
                 
-                // === FILTRO DE FERIADOS ===
                 if (isChileanHoliday(rowDate)) return;
 
                 const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
@@ -703,6 +723,7 @@
                 monthlyContainer.innerHTML += html;
             });
 
+
             document.getElementById('kpiEntrantes').innerText = kpiIn.toLocaleString();
             document.getElementById('kpiSalientes').innerText = kpiOut.toLocaleString();
             document.getElementById('kpiPeak').innerText = peakInCalls.toLocaleString();
@@ -769,7 +790,6 @@
                 if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
                 
-                // === FILTRO DE FERIADOS ===
                 if (isChileanHoliday(rowDate)) return;
 
                 const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
@@ -804,7 +824,6 @@
             renderDistChart('chartDist30', distLabels, distData, sentidoFilter);
         }
 
-        // --- Gráficos Clásicos ---
         function renderDistChart(canvasId, labels, data, sentido) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if(charts[canvasId]) charts[canvasId].destroy();
@@ -962,7 +981,6 @@
                 let baseAvgCalls = modelDow[block] || 0;
                 let projectedCalls = baseAvgCalls * factorCrecimiento;
                 
-                // Aplicar restricción visual del gráfico a 07:30 - 20:00
                 if(rosterBlocks.includes(block)) {
                     labelsList.push(block);
                     dataVolumen.push(Math.round(projectedCalls));
@@ -1096,56 +1114,146 @@
             updateRosterCalculations();
         });
 
+        // NUEVO: Exportar a Excel con Fórmulas Nativas
+        document.getElementById('btnExportExcel').addEventListener('click', () => {
+            let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="utf-8"></head><body>
+            <table border="1">
+                <thead>
+                    <tr style="background-color: #f3f4f6;">
+                        <th style="width:150px;">Nombre Agente</th>`;
+            
+            rosterBlocks.forEach(b => tableHtml += `<th>${b}</th>`);
+            tableHtml += `</tr></thead><tbody>`;
+
+            rosterAgents.forEach(a => {
+                tableHtml += `<tr><td>${a.name}</td>`;
+                rosterBlocks.forEach(b => {
+                    tableHtml += `<td>${a.shifts[b] ? 1 : 0}</td>`;
+                });
+                tableHtml += `</tr>`;
+            });
+
+            let lastAgentRow = rosterAgents.length + 1; 
+            
+            tableHtml += `<tr><td style="font-weight:bold;">Total Programado</td>`;
+            rosterBlocks.forEach((b, i) => {
+                let col = getExcelColName(i + 1);
+                // Fórmula de sumatoria (Suma funciona en español Excel y standard)
+                tableHtml += `<td style="font-weight:bold; background-color:#e5e7eb;">=SUMA(${col}2:${col}${lastAgentRow})</td>`;
+            });
+            tableHtml += `</tr>`;
+
+            tableHtml += `<tr><td style="font-weight:bold;">Requerido Erlang</td>`;
+            rosterBlocks.forEach(b => {
+                tableHtml += `<td style="font-weight:bold; background-color:#dcfce7;">${globalErlangRequirements[b] || 0}</td>`;
+            });
+            tableHtml += `</tr>`;
+
+            tableHtml += `<tr><td style="font-weight:bold;">Brecha</td>`;
+            rosterBlocks.forEach((b, i) => {
+                let col = getExcelColName(i + 1);
+                // Fórmula de resta
+                tableHtml += `<td style="font-weight:bold; background-color:#fee2e2;">=${col}${lastAgentRow + 1}-${col}${lastAgentRow + 2}</td>`;
+            });
+            tableHtml += `</tr>`;
+
+            tableHtml += `</tbody></table></body></html>`;
+
+            let blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement('a');
+            link.href = url;
+            link.download = 'Malla_Turnos_Espex.xls';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Utilidad para convertir indice a letra de columna excel (A, B, C...)
+        function getExcelColName(colIndex) {
+            let dividend = colIndex + 1;
+            let columnName = "";
+            let modulo;
+            while (dividend > 0) {
+                modulo = (dividend - 1) % 26;
+                columnName = String.fromCharCode(65 + modulo) + columnName;
+                dividend = parseInt((dividend - modulo) / 26);
+            }
+            return columnName;
+        }
+
+        // NUEVA LÓGICA DE AUTO DISTRIBUCIÓN (En orden secuencial y para ambos grupos)
         document.getElementById('btnAutoRoster').addEventListener('click', () => {
-            const numAgents = parseInt(document.getElementById('autoNumAgents').value) || 0;
-            const shiftHours = parseFloat(document.getElementById('autoShiftHours').value) || 0;
             
-            if(numAgents <= 0 || shiftHours <= 0) return alert("Ingresa un número válido de agentes y horas (ej: 10 agentes de 6 hrs).");
+            const numG1 = parseInt(document.getElementById('autoNumAgents1').value) || 0;
+            const hrsG1 = parseFloat(document.getElementById('autoShiftHours1').value) || 0;
+            const numG2 = parseInt(document.getElementById('autoNumAgents2').value) || 0;
+            const hrsG2 = parseFloat(document.getElementById('autoShiftHours2').value) || 0;
             
-            let shiftBlocks = Math.floor(shiftHours * 2);
-            if(shiftBlocks > rosterBlocks.length) shiftBlocks = rosterBlocks.length; 
+            if((numG1 <= 0 && numG2 <= 0)) return alert("Debes agregar agentes a por lo menos un grupo.");
             
             rosterAgents = [];
             agentCounter = 0;
             
             let currentProg = {};
             rosterBlocks.forEach(b => currentProg[b] = 0);
-            
-            for(let i = 0; i < numAgents; i++) {
-                agentCounter++;
-                let newAgent = { id: agentCounter, name: `Agente ${agentCounter}`, shifts: {} };
+
+            // Función interna para distribuir un grupo "En Orden" de mañana a tarde
+            function distributeGroup(numAgents, shiftHours, labelPrefix) {
+                if(numAgents <= 0 || shiftHours <= 0) return;
                 
-                let bestStartIdx = 0;
-                let maxScore = -999999;
+                let shiftBlocks = Math.floor(shiftHours * 2);
+                if(shiftBlocks > rosterBlocks.length) shiftBlocks = rosterBlocks.length; 
                 
-                for(let s = 0; s <= rosterBlocks.length - shiftBlocks; s++) {
-                    let score = 0;
-                    for(let j = 0; j < shiftBlocks; j++) {
-                        let block = rosterBlocks[s + j];
+                for(let i = 0; i < numAgents; i++) {
+                    agentCounter++;
+                    let newAgent = { id: agentCounter, name: `${labelPrefix} ${i+1}`, shifts: {} };
+                    let placed = false;
+                    
+                    // Escanear cronológicamente desde las 07:30 hasta la tarde
+                    for(let s = 0; s <= rosterBlocks.length - shiftBlocks; s++) {
+                        let block = rosterBlocks[s];
                         let req = globalErlangRequirements[block] || 0;
                         let prog = currentProg[block] || 0;
                         
+                        // Si hay necesidad aquí, intentamos plantar el turno completo
                         if(req > prog) {
-                            score += (req - prog); 
-                        } else {
-                            score -= 0.5; 
+                            for(let j = 0; j < shiftBlocks; j++) {
+                                let fillBlock = rosterBlocks[s + j];
+                                newAgent.shifts[fillBlock] = true;
+                                currentProg[fillBlock]++;
+                            }
+                            rosterAgents.push(newAgent);
+                            placed = true;
+                            break; 
                         }
                     }
                     
-                    if(score > maxScore) {
-                        maxScore = score;
-                        bestStartIdx = s;
+                    // Si ya está todo cubierto, pero sobran agentes, se asignan donde hay menos sobre-cobertura (fallback)
+                    if(!placed) {
+                        let bestStartIdx = 0;
+                        let maxScore = -999999;
+                        for(let s = 0; s <= rosterBlocks.length - shiftBlocks; s++) {
+                            let score = 0;
+                            for(let j = 0; j < shiftBlocks; j++) {
+                                let b = rosterBlocks[s + j];
+                                score += ((globalErlangRequirements[b] || 0) - currentProg[b]); 
+                            }
+                            if(score > maxScore) { maxScore = score; bestStartIdx = s; }
+                        }
+                        for(let j = 0; j < shiftBlocks; j++) {
+                            let fillBlock = rosterBlocks[bestStartIdx + j];
+                            newAgent.shifts[fillBlock] = true;
+                            currentProg[fillBlock]++;
+                        }
+                        rosterAgents.push(newAgent);
                     }
                 }
-                
-                for(let j = 0; j < shiftBlocks; j++) {
-                    let block = rosterBlocks[bestStartIdx + j];
-                    newAgent.shifts[block] = true;
-                    currentProg[block]++;
-                }
-                
-                rosterAgents.push(newAgent);
             }
+
+            distributeGroup(numG1, hrsG1, "Agt. G1");
+            distributeGroup(numG2, hrsG2, "Agt. G2");
             
             renderRosterBody();
             updateRosterCalculations();
@@ -1159,6 +1267,10 @@
             reqCells.forEach(c => c.remove());
             const brechaCells = tfoot.rows[2].querySelectorAll('.calc-cell');
             brechaCells.forEach(c => c.remove());
+
+            // Variables para la cuadrícula de recomendación visual
+            const recGrid = document.getElementById('rosterRecommendationGrid');
+            recGrid.innerHTML = '';
 
             rosterBlocks.forEach(block => {
                 let totalProg = 0;
@@ -1180,17 +1292,13 @@
                 tdBrecha.className = `calc-cell p-2 border-r font-extrabold ${brecha < 0 ? 'text-red-500 bg-red-50' : (brecha > 0 ? 'text-blue-500' : 'text-green-500')}`;
                 tdBrecha.innerText = brecha > 0 ? `+${brecha}` : brecha;
                 tfoot.rows[2].appendChild(tdBrecha);
-            });
 
-            const recGrid = document.getElementById('rosterRecommendationGrid');
-            recGrid.innerHTML = '';
-            rosterBlocks.forEach(block => {
-                let reqErlang = globalErlangRequirements[block] || 0;
+                // NUEVO: Cuadrícula Visual mostrando Agentes Programados
                 recGrid.innerHTML += `
-                    <div class="bg-gray-50 border border-espex-light p-2 rounded text-center shadow-sm">
+                    <div class="bg-gray-50 border ${brecha < 0 ? 'border-red-300' : 'border-espex-light'} p-2 rounded text-center shadow-sm">
                         <div class="text-xs text-gray-500 font-bold">${block}</div>
-                        <div class="text-lg text-espex-dark font-extrabold">${reqErlang}</div>
-                        <div class="text-[10px] text-gray-400">Agentes</div>
+                        <div class="text-lg ${brecha < 0 ? 'text-red-600' : 'text-espex-dark'} font-extrabold">${totalProg}</div>
+                        <div class="text-[10px] text-gray-400">Disponibles</div>
                     </div>
                 `;
             });
