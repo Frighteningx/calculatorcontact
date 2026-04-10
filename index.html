@@ -55,7 +55,7 @@
         
         <div class="glass-panel border-t-4 border-espex">
             <div class="flex items-center mb-4 border-b pb-2">
-                <h2 class="text-xl font-bold text-espex-dark">Panel de Control y Filtros</h2>
+                <h2 class="text-xl font-bold text-espex-dark">FORECAST Y PROGRAMACIÓN TURNOS HDLF</h2>
                 <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold ml-3" title="Los feriados de Chile han sido eliminados de la muestra para no sesgar promedios ni SLA.">Feriados Chilenos Excluidos</span>
             </div>
             
@@ -334,11 +334,11 @@
                     </div>
 
                     <div class="p-6 bg-gray-50 border-b border-gray-200">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-bold text-xl text-espex-dark">Paso 2: Asignación de Turnos (Roster)</h3>
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
+                            <h3 class="font-bold text-xl text-espex-dark mb-2 md:mb-0">Paso 2: Asignación de Turnos (Roster)</h3>
                             <button id="btnExportExcel" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold text-sm shadow transition flex items-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                Descargar Excel Interactivo
+                                📥 Descargar Excel
                             </button>
                         </div>
                         
@@ -561,6 +561,7 @@
                 if (!row['Fecha']) return;
                 const rowDate = row['Fecha'].split(' ')[0];
                 
+                // === FILTRO DE FERIADOS ===
                 if (isChileanHoliday(rowDate)) return;
 
                 const rowSentido = (row['Sentido'] || '').trim().toLowerCase();
@@ -1114,47 +1115,57 @@
             updateRosterCalculations();
         });
 
-        // NUEVO: Exportar a Excel con Fórmulas Nativas
+        // NUEVA EXPORTACIÓN EXCEL CON FORMATO CONDICIONAL XML Y FÓRMULAS
         document.getElementById('btnExportExcel').addEventListener('click', () => {
+            // Calcular el rango dinámico para el formato condicional
+            let lastCol = getExcelColName(rosterBlocks.length); 
+            let cfRange = `B2:${lastCol}200`; 
+
             let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-            <head><meta charset="utf-8"></head><body>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    .c { text-align: center; vertical-align: middle; }
+                    .z { color: #d1d5db; text-align: center; vertical-align: middle; }
+                </style>
+                </head><body>
             <table border="1">
                 <thead>
                     <tr style="background-color: #f3f4f6;">
-                        <th style="width:150px;">Nombre Agente</th>`;
+                        <th style="width:150px; font-weight:bold;">Nombre Agente</th>`;
             
-            rosterBlocks.forEach(b => tableHtml += `<th>${b}</th>`);
+            rosterBlocks.forEach(b => tableHtml += `<th style="font-weight:bold;">${b}</th>`);
             tableHtml += `</tr></thead><tbody>`;
 
             rosterAgents.forEach(a => {
-                tableHtml += `<tr><td>${a.name}</td>`;
+                tableHtml += `<tr><td style="font-weight:bold;">${a.name}</td>`;
                 rosterBlocks.forEach(b => {
-                    tableHtml += `<td>${a.shifts[b] ? 1 : 0}</td>`;
+                    let val = a.shifts[b] ? 1 : 0;
+                    let cls = val === 1 ? 'c' : 'z';
+                    tableHtml += `<td class="${cls}">${val}</td>`;
                 });
                 tableHtml += `</tr>`;
             });
 
             let lastAgentRow = rosterAgents.length + 1; 
             
-            tableHtml += `<tr><td style="font-weight:bold;">Total Programado</td>`;
+            tableHtml += `<tr><td style="font-weight:bold; background-color:#f3f4f6;">Total Programado</td>`;
             rosterBlocks.forEach((b, i) => {
                 let col = getExcelColName(i + 1);
-                // Fórmula de sumatoria (Suma funciona en español Excel y standard)
-                tableHtml += `<td style="font-weight:bold; background-color:#e5e7eb;">=SUMA(${col}2:${col}${lastAgentRow})</td>`;
+                tableHtml += `<td style="font-weight:bold; background-color:#e5e7eb; text-align:center;">=SUMA(${col}2:${col}${lastAgentRow})</td>`;
             });
             tableHtml += `</tr>`;
 
-            tableHtml += `<tr><td style="font-weight:bold;">Requerido Erlang</td>`;
+            tableHtml += `<tr><td style="font-weight:bold; background-color:#f3f4f6;">Requerido Erlang</td>`;
             rosterBlocks.forEach(b => {
-                tableHtml += `<td style="font-weight:bold; background-color:#dcfce7;">${globalErlangRequirements[b] || 0}</td>`;
+                tableHtml += `<td style="font-weight:bold; background-color:#dcfce7; text-align:center;">${globalErlangRequirements[b] || 0}</td>`;
             });
             tableHtml += `</tr>`;
 
-            tableHtml += `<tr><td style="font-weight:bold;">Brecha</td>`;
+            tableHtml += `<tr><td style="font-weight:bold; background-color:#f3f4f6;">Brecha</td>`;
             rosterBlocks.forEach((b, i) => {
                 let col = getExcelColName(i + 1);
-                // Fórmula de resta
-                tableHtml += `<td style="font-weight:bold; background-color:#fee2e2;">=${col}${lastAgentRow + 1}-${col}${lastAgentRow + 2}</td>`;
+                tableHtml += `<td style="font-weight:bold; background-color:#fee2e2; text-align:center;">=${col}${lastAgentRow + 1}-${col}${lastAgentRow + 2}</td>`;
             });
             tableHtml += `</tr>`;
 
@@ -1170,7 +1181,7 @@
             document.body.removeChild(link);
         });
 
-        // Utilidad para convertir indice a letra de columna excel (A, B, C...)
+        // Utilidad Excel Columnas (A, B... Z, AA)
         function getExcelColName(colIndex) {
             let dividend = colIndex + 1;
             let columnName = "";
@@ -1183,7 +1194,7 @@
             return columnName;
         }
 
-        // NUEVA LÓGICA DE AUTO DISTRIBUCIÓN (En orden secuencial y para ambos grupos)
+        // AUTO DISTRIBUCIÓN EN ORDEN PARA G1 Y G2
         document.getElementById('btnAutoRoster').addEventListener('click', () => {
             
             const numG1 = parseInt(document.getElementById('autoNumAgents1').value) || 0;
@@ -1199,7 +1210,6 @@
             let currentProg = {};
             rosterBlocks.forEach(b => currentProg[b] = 0);
 
-            // Función interna para distribuir un grupo "En Orden" de mañana a tarde
             function distributeGroup(numAgents, shiftHours, labelPrefix) {
                 if(numAgents <= 0 || shiftHours <= 0) return;
                 
@@ -1211,13 +1221,12 @@
                     let newAgent = { id: agentCounter, name: `${labelPrefix} ${i+1}`, shifts: {} };
                     let placed = false;
                     
-                    // Escanear cronológicamente desde las 07:30 hasta la tarde
+                    // Escanear EN ORDEN cronológico
                     for(let s = 0; s <= rosterBlocks.length - shiftBlocks; s++) {
                         let block = rosterBlocks[s];
                         let req = globalErlangRequirements[block] || 0;
                         let prog = currentProg[block] || 0;
                         
-                        // Si hay necesidad aquí, intentamos plantar el turno completo
                         if(req > prog) {
                             for(let j = 0; j < shiftBlocks; j++) {
                                 let fillBlock = rosterBlocks[s + j];
@@ -1230,7 +1239,6 @@
                         }
                     }
                     
-                    // Si ya está todo cubierto, pero sobran agentes, se asignan donde hay menos sobre-cobertura (fallback)
                     if(!placed) {
                         let bestStartIdx = 0;
                         let maxScore = -999999;
@@ -1268,7 +1276,6 @@
             const brechaCells = tfoot.rows[2].querySelectorAll('.calc-cell');
             brechaCells.forEach(c => c.remove());
 
-            // Variables para la cuadrícula de recomendación visual
             const recGrid = document.getElementById('rosterRecommendationGrid');
             recGrid.innerHTML = '';
 
@@ -1293,7 +1300,7 @@
                 tdBrecha.innerText = brecha > 0 ? `+${brecha}` : brecha;
                 tfoot.rows[2].appendChild(tdBrecha);
 
-                // NUEVO: Cuadrícula Visual mostrando Agentes Programados
+                // Cuadrícula Visual mostrando Agentes Programados
                 recGrid.innerHTML += `
                     <div class="bg-gray-50 border ${brecha < 0 ? 'border-red-300' : 'border-espex-light'} p-2 rounded text-center shadow-sm">
                         <div class="text-xs text-gray-500 font-bold">${block}</div>
